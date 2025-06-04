@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 import Trade from "../Models/Trade.js";
 import Strategy from "../Models/Strategy.js";
+import dayjs from "dayjs";
 
 // Utility to update strategy stats
 const updateStrategyStats = async (strategyId) => {
@@ -156,5 +157,61 @@ router.get("/trades/:id", async (req, res) => {
     });
   }
 });
+
+
+
+router.get("/trades", async (req, res) => {
+  try {
+    let { startDate, endDate } = req.query;
+
+    let query = {};
+    if (startDate && endDate) {
+      // Convert to Date objects
+      startDate = dayjs(startDate).startOf("day").toDate();
+      endDate = dayjs(endDate).endOf("day").toDate();
+
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid date format. Use YYYY-MM-DD",
+        });
+      }
+
+      if (startDate > endDate) {
+        return res.status(400).json({
+          success: false,
+          message: "startDate cannot be after endDate",
+        });
+      }
+
+      query.entry_date = { $gte: startDate, $lte: endDate };
+    } else {
+      // Default: fetch trades from past 1 month
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      query.entry_date = { $gte: oneMonthAgo };
+    }
+
+    const trades = await Trade.find(query)
+      .select("entry_date net_pnl -_id")
+      .sort({ entry_date: 1 });
+
+    res.json({
+      success: true,
+      trades: trades.map((t) => ({
+        entry_date: t.entry_date,
+        net_pnl: t.net_pnl,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching trades:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch trades",
+      error: error.message,
+    });
+  }
+});
+
 
 export default router;

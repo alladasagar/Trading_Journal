@@ -7,6 +7,7 @@ import authRoutes from "./Routes/authRoutes.js";
 import strategyRoutes from "./Routes/StrategiesRoutes.js";
 import premarketRoutes from "./Routes/PremarketRoutes.js";
 import tradeRoutes from "./Routes/tradeRoutes.js"
+import EventRoutes from "./Routes/EventRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -21,8 +22,10 @@ app.use(cors({
 app.use(express.json());
 
 app.use("/", authRoutes);
-app.use("/", strategyRoutes); // ✅ Add this line
+app.use("/", strategyRoutes); 
 app.use("/", premarketRoutes);
 app.use("/",tradeRoutes);
+app.use("/",EventRoutes)
+app.use('/trades', tradeRoutes); 
 
 app.listen(PORT, () => console.log(`✅ Server is running on port ${PORT}`));

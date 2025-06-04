@@ -12,6 +12,8 @@ import TradesPage from './Components/Trades/TradesPage'
 import AddTrade from './Components/Trades/TradeForm'
 import ViewTrade from './Components/Trades/ViewTrade'
 import TradeForm from './Components/Trades/TradeForm'
+import EventsPage from './Components/Events/EventsPage'
+import EventForm from './Components/Events/EventForm'
 
 function App() {
   return (
@@ -33,6 +35,13 @@ function App() {
           <Route path="/strategies/:strategyId/add-trade" element={<TradeForm />} />
           <Route path="/strategies/:strategyId/trades/:tradeId/edit" element={<TradeForm isEdit={true} />} />
           <Route path="/trades/:id" element={<ViewTrade />} />
+          <Route path='/events' element={<EventsPage/>}/>
+          <Route path='/events/addEvent' element={<EventForm isEdit={false}/>}/>
+          <Route path='/events/:eventId/edit' element={<EventForm isEdit={true} />}/>
+          {/* <EventForm path="/events/add" isEdit={false} />
+          <EventForm path="/events/edit/:id" isEdit={true} /> */}
+
+
           
           <Route path="/" element={<HomePage />} />
         </Route>

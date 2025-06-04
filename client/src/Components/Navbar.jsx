@@ -24,24 +24,23 @@ const Navbar = () => {
       </div>
 
       {/* Sidebar - hidden on mobile unless menu is open */}
-      <div 
+      <div
         className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block w-full md:w-64 bg-black text-white p-4`}
       >
         <div className="mb-4 md:mb-8">
           <h1 className="text-xl md:text-2xl font-bold text-[#27c284] hidden md:block">Trading Journal</h1>
         </div>
-        
+
         <nav>
           <ul className="space-y-2 md:space-y-4">
             <li>
               <NavLink
                 to="/home"
                 end
-                className={({ isActive }) => 
-                  `flex items-center w-full p-2 rounded transition duration-200 ${
-                    isActive
-                      ? "bg-gray-800 text-[#27c284]"
-                      : "text-[#27c284] hover:bg-gray-800"
+                className={({ isActive }) =>
+                  `flex items-center w-full p-2 rounded transition duration-200 ${isActive
+                    ? "bg-gray-800 text-[#27c284]"
+                    : "text-[#27c284] hover:bg-gray-800"
                   }`
                 }
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -55,11 +54,10 @@ const Navbar = () => {
             <li>
               <NavLink
                 to="/strategies"
-                className={({ isActive }) => 
-                  `flex items-center w-full p-2 rounded transition duration-200 ${
-                    isActive
-                      ? "bg-gray-800 text-[#27c284]"
-                      : "text-[#27c284] hover:bg-gray-800"
+                className={({ isActive }) =>
+                  `flex items-center w-full p-2 rounded transition duration-200 ${isActive
+                    ? "bg-gray-800 text-[#27c284]"
+                    : "text-[#27c284] hover:bg-gray-800"
                   }`
                 }
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -73,11 +71,10 @@ const Navbar = () => {
             <li>
               <NavLink
                 to="/premarket"
-                className={({ isActive }) => 
-                  `flex items-center w-full p-2 rounded transition duration-200 ${
-                    isActive
-                      ? "bg-gray-800 text-[#27c284]"
-                      : "text-[#27c284] hover:bg-gray-800"
+                className={({ isActive }) =>
+                  `flex items-center w-full p-2 rounded transition duration-200 ${isActive
+                    ? "bg-gray-800 text-[#27c284]"
+                    : "text-[#27c284] hover:bg-gray-800"
                   }`
                 }
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -88,10 +85,28 @@ const Navbar = () => {
                 Premarket
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/events"
+                className={({ isActive }) =>
+                  `flex items-center w-full p-2 rounded transition duration-200 ${isActive
+                    ? "bg-gray-800 text-[#27c284]"
+                    : "text-[#27c284] hover:bg-gray-800"
+                  }`
+                }
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Events
+              </NavLink>
+            </li>
+
           </ul>
         </nav>
       </div>
-      
+
       {/* Main content */}
       <div className="flex-1 p-4 sm:p-6 md:p-8 bg-gray-900 overflow-auto">
         <Outlet />

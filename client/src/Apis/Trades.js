@@ -1,4 +1,6 @@
 import axios from "axios";
+import dayjs from "dayjs";
+
 
 const BASE_URL = "http://localhost:5000";
 
@@ -61,3 +63,29 @@ export const deleteTrade = async (tradeId) => {
     return { success: false, message: "Failed to delete trade" };
   }
 };
+
+export const fetchAllTrades = async () => {
+  try {
+    const res = await axios.get(`${BASE_URL}/trades`);
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching trades:", error);
+    return { success: false, message: "Failed to fetch trades" };
+  }
+};
+
+export const fetchTradesByDate = async (startDate, endDate) => {
+  try {
+    const res = await axios.get(`${BASE_URL}/trades`, {
+      params: {
+        startDate: dayjs(startDate).format("YYYY-MM-DD"),
+        endDate: dayjs(endDate).format("YYYY-MM-DD"),
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error fetching trades by date:", error);
+    return { success: false, message: "Failed to fetch trades by date" };
+  }
+};
+
