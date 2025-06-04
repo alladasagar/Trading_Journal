@@ -9,7 +9,9 @@ import AddStrategy from './Components/Strategies/AddStartegy'
 import AddPremarket from './Components/Premarket/AddPremarket'
 import ViewStrategy from './Components/Strategies/ViewStrategy'
 import TradesPage from './Components/Trades/TradesPage'
-import AddTrade from './Components/Trades/AddTrade'
+import AddTrade from './Components/Trades/TradeForm'
+import ViewTrade from './Components/Trades/ViewTrade'
+import TradeForm from './Components/Trades/TradeForm'
 
 function App() {
   return (
@@ -28,7 +30,9 @@ function App() {
           <Route path="/edit-premarket/:id" element={<AddPremarket />} />
           <Route path="/strategies/:id" element={<ViewStrategy/>}/>
           <Route path="/strategies/:id/trades" element={<TradesPage />} />
-          <Route path="/strategies/:id/add-trade" element={<AddTrade />} />
+          <Route path="/strategies/:strategyId/add-trade" element={<TradeForm />} />
+          <Route path="/strategies/:strategyId/trades/:tradeId/edit" element={<TradeForm isEdit={true} />} />
+          <Route path="/trades/:id" element={<ViewTrade />} />
           
           <Route path="/" element={<HomePage />} />
         </Route>

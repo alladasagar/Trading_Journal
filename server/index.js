@@ -6,6 +6,7 @@ import connectDB from "./db.js";
 import authRoutes from "./Routes/authRoutes.js";
 import strategyRoutes from "./Routes/StrategiesRoutes.js";
 import premarketRoutes from "./Routes/PremarketRoutes.js";
+import tradeRoutes from "./Routes/tradeRoutes.js"
 
 dotenv.config();
 connectDB();
@@ -22,5 +23,6 @@ app.use(express.json());
 app.use("/", authRoutes);
 app.use("/", strategyRoutes); // ✅ Add this line
 app.use("/", premarketRoutes);
+app.use("/",tradeRoutes);
 
 app.listen(PORT, () => console.log(`✅ Server is running on port ${PORT}`));

@@ -1,12 +1,12 @@
 // models/trade.model.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const tradeSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  strategy_id: { type: mongoose.Schema.Types.ObjectId, ref: "Strategy", required: true },
-  side: { type: String, enum: ["buy", "sell"], required: true },
+  strategyId: { type: mongoose.Schema.Types.ObjectId, ref: "Strategy", required: true },
+  side: { type: String, enum: ["Short", "Long"], required: true },
   entry: { type: Number, required: true },
-  exit: { type: Number, required: true },
+  exit: { type: Number, required: false },
   stop_loss: { type: Number, required: true },
   shares: { type: Number, required: true },
   charges: { type: Number, required: true },
@@ -19,7 +19,7 @@ const tradeSchema = new mongoose.Schema({
   duration: { type: String },
   screenshot: { type: String },
   mistakes: [{ type: String }],
-  emojis: [{ type: String }],
+  emojis: { type: String },
   // Calculated fields
   capital: { type: Number },
   gross_pnl: { type: Number },
@@ -28,4 +28,4 @@ const tradeSchema = new mongoose.Schema({
   roi: { type: Number },
 }, { timestamps: true });
 
-module.exports = mongoose.model("Trade", tradeSchema);
+export default mongoose.model("Trade",tradeSchema);
