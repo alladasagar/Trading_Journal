@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import { login } from '../Apis/Auth';
+import { useToast } from '../Components/context/ToastContext';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ const LoginPage = () => {
   });
 
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   const { email, password } = formData;
 
@@ -21,17 +23,16 @@ const LoginPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Logging in with:', formData);
 
     const response = await login(formData);
-    console.log("Login response:", response);
 
-    if (response?.status === 200) {
-      console.log("✅ Login successful!");
+    if (response?.status === 200 && response?.token) {
+      addToast( response.message || "Login successful", "success");
+      localStorage.setItem("token", response.token);
+
       navigate('/home');
     } else {
-      console.error("❌ Login failed:", response.message || "Invalid credentials");
-      alert("Login failed. Please check your credentials.");
+      addToast(response.message || "Login failed. Please check your credentials." , "error");
     }
 
   };

@@ -1,10 +1,25 @@
-// src/Pages/Premarket.jsx
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DisplayPremarket from "./DisplayPremarket";
+import Loader from "../ui/Loader";
 import { AiOutlinePlus } from "react-icons/ai";
+import { fetchPremarketPlans } from "../../Apis/Premarket";
 
 const Premarket = () => {
   const navigate = useNavigate();
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const loadPlans = async () => {
+      setLoading(true);
+      const result = await fetchPremarketPlans();
+      if (result.success) setPlans(result.data);
+      else setPlans([]);
+      setLoading(false);
+    };
+    loadPlans();
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
@@ -23,7 +38,13 @@ const Premarket = () => {
       </div>
 
       <div className="border-t border-gray-700 pt-4 sm:pt-6">
-        <DisplayPremarket />
+        {loading ? (
+          <div className="flex justify-center items-center h-48">
+            <Loader />
+          </div>
+        ) : (
+          <DisplayPremarket plans={plans} />
+        )}
       </div>
     </div>
   );

@@ -1,8 +1,19 @@
 import React, { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import ConfirmModal from "./ui/ConfirmModal";
+import { useToast } from "./context/ToastContext";
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    addToast("Logout successful", "success");
+    navigate("/login");
+  };
 
   return (
     <div className="flex flex-col md:flex-row h-screen">
@@ -102,6 +113,17 @@ const Navbar = () => {
                 Events
               </NavLink>
             </li>
+            <li>
+              <button
+                onClick={() => setIsLogoutModalOpen(true)}
+                className="flex items-center w-full p-2 rounded transition duration-200 text-[#27c284] hover:bg-gray-800 cursor-pointer"
+              >
+                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 11-6 0v-1m0-4V9a3 3 0 016 0v1" />
+                </svg>
+                Logout
+              </button>
+            </li>
 
           </ul>
         </nav>
@@ -111,6 +133,14 @@ const Navbar = () => {
       <div className="flex-1 p-4 sm:p-6 md:p-8 bg-gray-900 overflow-auto">
         <Outlet />
       </div>
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to log out?"
+      />
+
     </div>
   );
 };

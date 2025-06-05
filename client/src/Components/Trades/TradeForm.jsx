@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { addTrade, fetchTradeById, updateTrade } from "../../Apis/Trades";
+import { getStrategyById as fetchStrategyById } from "../../Apis/Strategies";
 import { useToast } from "../context/ToastContext";
+import Loader from "../ui/Loader";
 
 const TradeForm = ({ isEdit = false }) => {
   const { strategyId, tradeId } = useParams();
-  console.log("tradeId", tradeId);
   const navigate = useNavigate();
   const { addToast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState("");
   const [loading, setLoading] = useState(isEdit);
+
+  const [strategy, setStrategy] = useState({
+    entry_rules: [],
+    exit_rules: []
+  });
 
   const EMOJI_OPTIONS = [
     { value: "😊", label: "Happy" },
@@ -44,6 +50,8 @@ const TradeForm = ({ isEdit = false }) => {
     mistakes: [""],
     emojis: "",
     strategyId: strategyId,
+    entry_rules: [],
+    exit_rules: []
   });
 
   const [calculated, setCalculated] = useState({
@@ -63,19 +71,15 @@ const TradeForm = ({ isEdit = false }) => {
     const loadTrade = async () => {
       try {
         const result = await fetchTradeById(tradeId);
-        console.log("tradeId", tradeId);
-
         if (result.success) {
           const trade = result.trade;
-          console.log("trade", trade);
-
-          // Format dates for input fields
           const entryDate = trade.entry_date ? new Date(trade.entry_date).toISOString().split('T')[0] : '';
           const exitDate = trade.exit_date ? new Date(trade.exit_date).toISOString().split('T')[0] : '';
 
-          setForm({
+          setForm(prev => ({
+            ...prev,
             name: trade.name || "",
-            side: trade.side || "",
+            side: trade.side || "Short",
             entry: trade.entry != null ? trade.entry.toString() : "",
             exit: trade.exit != null ? trade.exit.toString() : "",
             stop_loss: trade.stop_loss != null ? trade.stop_loss.toString() : "",
@@ -91,8 +95,9 @@ const TradeForm = ({ isEdit = false }) => {
             screenshot: trade.screenshot || "",
             mistakes: Array.isArray(trade.mistakes) && trade.mistakes.length > 0 ? trade.mistakes : [""],
             emojis: trade.emojis || "",
-            strategyId: strategyId,
-          });
+            entry_rules: Array.isArray(trade.entry_rules) ? trade.entry_rules : [],
+            exit_rules: Array.isArray(trade.exit_rules) ? trade.exit_rules : []
+          }));
 
           setPreviewImage(trade.screenshot || "");
         } else {
@@ -102,14 +107,31 @@ const TradeForm = ({ isEdit = false }) => {
       } catch (error) {
         addToast("An error occurred while loading trade", "error");
         navigate(-1);
-      }finally{
+      } finally {
         setLoading(false);
       }
-
     };
 
     loadTrade();
-  }, [isEdit, tradeId, addToast, navigate]);
+  }, [isEdit, tradeId, addToast, navigate, strategyId]);
+
+  useEffect(() => {
+    const loadStrategy = async () => {
+      try {
+        const result = await fetchStrategyById(strategyId);
+        if (result.success) {
+          setStrategy({
+            entry_rules: result.data?.entry_rules || [],
+            exit_rules: result.data?.exit_rules || []
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load strategy", error);
+      }
+    };
+
+    loadStrategy();
+  }, [strategyId]);
 
   // Calculate derived values
   useEffect(() => {
@@ -117,7 +139,7 @@ const TradeForm = ({ isEdit = false }) => {
       const weekday = new Date(form.entry_date).toLocaleDateString("en-US", {
         weekday: "long",
       });
-      setForm((prev) => ({ ...prev, day: weekday }));
+      setForm(prev => ({ ...prev, day: weekday }));
     }
 
     const entry = parseFloat(form.entry) || 0;
@@ -126,17 +148,18 @@ const TradeForm = ({ isEdit = false }) => {
     const stopLoss = parseFloat(form.stop_loss) || 0;
     const charges = parseFloat(form.charges) || 0;
 
-    const capital = entry * shares;
-    const grossPnl =
-      form.side === "Short" ? (exit - entry) * shares : (entry - exit) * shares;
-    const netPnl = grossPnl - charges;
-    const percentPnl = capital ? (netPnl / capital) * 100 : 0;
+    const capital = parseFloat((entry * shares).toFixed(2));
+    const grossPnl = parseFloat((
+      form.side === "Short" ? (exit - entry) * shares : (entry - exit) * shares
+    ).toFixed(2));
+    const netPnl = parseFloat((grossPnl - charges).toFixed(2));
+    const percentPnl = parseFloat((capital ? (netPnl / capital) * 100 : 0).toFixed(2));
 
     let roi = 0;
     if (form.side === "Short" && entry - stopLoss !== 0) {
-      roi = (exit - entry) / (entry - stopLoss);
+      roi = parseFloat(((exit - entry) / (entry - stopLoss)).toFixed(2));
     } else if (form.side === "Long" && stopLoss - entry !== 0) {
-      roi = (entry - exit) / (stopLoss - entry);
+      roi = parseFloat(((entry - exit) / (stopLoss - entry)).toFixed(2));
     }
 
     let duration = "";
@@ -157,7 +180,7 @@ const TradeForm = ({ isEdit = false }) => {
     });
 
     if (duration) {
-      setForm((prev) => ({ ...prev, duration }));
+      setForm(prev => ({ ...prev, duration }));
     }
   }, [
     form.entry,
@@ -173,23 +196,69 @@ const TradeForm = ({ isEdit = false }) => {
   const validateForm = () => {
     const newErrors = {};
     const requiredFields = [
-      "name",
-      "entry",
-      "stop_loss",
-      "shares",
-      "charges",
+      'name',
+      'side',
+      'entry',
+      'stop_loss',
+      'shares',
+      'charges',
+      'entry_date'
     ];
 
+    // Validate required fields
     requiredFields.forEach((field) => {
       if (!form[field]) {
-        newErrors[field] = `This field is required`;
-      } else if (
-        ["entry", "stop_loss", "shares", "charges"].includes(field) &&
-        isNaN(form[field])
-      ) {
-        newErrors[field] = `Must be a valid number`;
+        newErrors[field] = `${field.replace(/_/g, ' ')} is required`;
       }
     });
+
+    // Validate array fields
+    if (!form.entry_rules || form.entry_rules.length === 0) {
+      newErrors.entry_rules = 'At least one entry rule must be selected';
+    }
+
+    if (!form.exit_rules || form.exit_rules.length === 0) {
+      newErrors.exit_rules = 'At least one exit rule must be selected';
+    }
+
+    // Validate number fields
+    const numberFields = ['entry', 'exit', 'stop_loss', 'shares', 'charges', 'target'];
+    numberFields.forEach((field) => {
+      if (form[field] && isNaN(form[field])) {
+        newErrors[field] = `${field.replace(/_/g, ' ')} must be a valid number`;
+      } else if (form[field] && parseFloat(form[field]) < 0) {
+        newErrors[field] = `${field.replace(/_/g, ' ')} must be positive`;
+      }
+    });
+
+    // Validate shares is a whole number
+    if (form.shares && !Number.isInteger(parseFloat(form.shares))) {
+      newErrors.shares = 'Shares must be a whole number';
+    }
+
+    // Validate dates
+    if (form.entry_date) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const entryDate = new Date(form.entry_date);
+
+      // Set both dates to midnight for accurate comparison
+      const entryDateAtMidnight = new Date(entryDate);
+      entryDateAtMidnight.setHours(0, 0, 0, 0);
+
+      if (entryDateAtMidnight > today) {
+        newErrors.entry_date = 'Entry date cannot be in the future';
+      }
+    }
+
+    if (form.exit_date && form.entry_date) {
+      const entryDate = new Date(form.entry_date);
+      const exitDate = new Date(form.exit_date);
+
+      if (exitDate < entryDate) {
+        newErrors.exit_date = 'Exit date must be after entry date';
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -197,25 +266,25 @@ const TradeForm = ({ isEdit = false }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
+      setErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
   const handleArrayChange = (field, index, value) => {
     const updated = [...form[field]];
     updated[index] = value;
-    setForm({ ...form, [field]: updated });
+    setForm(prev => ({ ...prev, [field]: updated }));
   };
 
   const addArrayField = (field) => {
-    setForm({ ...form, [field]: [...form[field], ""] });
+    setForm(prev => ({ ...prev, [field]: [...prev[field], ""] }));
   };
 
   const removeArrayField = (field, index) => {
     const updated = form[field].filter((_, i) => i !== index);
-    setForm({ ...form, [field]: updated });
+    setForm(prev => ({ ...prev, [field]: updated }));
   };
 
   const handleImageUpload = async (e) => {
@@ -251,7 +320,7 @@ const TradeForm = ({ isEdit = false }) => {
       const data = await response.json();
 
       if (data.secure_url) {
-        setForm((prev) => ({ ...prev, screenshot: data.secure_url }));
+        setForm(prev => ({ ...prev, screenshot: data.secure_url }));
         setPreviewImage(data.secure_url);
         addToast("Screenshot uploaded successfully", "success");
       } else {
@@ -279,19 +348,18 @@ const TradeForm = ({ isEdit = false }) => {
         ...calculated,
         strategyId: strategyId,
         entry: parseFloat(form.entry),
-        exit: parseFloat(form.exit),
+        exit: form.exit ? parseFloat(form.exit) : null,
         stop_loss: parseFloat(form.stop_loss),
         shares: parseFloat(form.shares),
         charges: parseFloat(form.charges),
         target: form.target ? parseFloat(form.target) : null,
         mistakes: form.mistakes.filter((m) => m !== ""),
         emojis: form.emojis,
+        entry_rules: form.entry_rules,
+        exit_rules: form.exit_rules,
         entry_date: new Date(form.entry_date).toISOString(),
-        exit_date: form.exit_date
-          ? new Date(form.exit_date).toISOString()
-          : null,
+        exit_date: form.exit_date ? new Date(form.exit_date).toISOString() : null,
       };
-      console.log("stragyId", strategyId);
 
       let result;
       if (isEdit) {
@@ -301,31 +369,20 @@ const TradeForm = ({ isEdit = false }) => {
       }
 
       if (result.success) {
-        addToast(
-          `Trade ${isEdit ? "updated" : "added"} successfully`,
-          "success"
-        );
+        addToast(`Trade ${isEdit ? "updated" : "added"} successfully`, "success");
         navigate(`/strategies/${strategyId}/trades`);
       } else {
         addToast(result.message || `Failed to ${isEdit ? "update" : "add"} trade`, "error");
       }
     } catch (error) {
       console.error("Trade submission error:", error);
-      addToast(
-        `An error occurred while ${isEdit ? "updating" : "saving"} the trade`,
-        "error"
-      );
+      addToast(`An error occurred while ${isEdit ? "updating" : "saving"} the trade`, "error");
     }
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-8 w-8 bg-blue-600 rounded-full mb-2"></div>
-          <span>Loading trade data...</span>
-        </div>
-      </div>
+      <Loader />
     );
   }
 
@@ -335,10 +392,7 @@ const TradeForm = ({ isEdit = false }) => {
         {isEdit ? "Edit Trade" : "Add Trade"}
       </h2>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-2 gap-6"
-      >
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Trade Name */}
         <div className="col-span-1">
           <label className="block text-sm font-medium mb-1">Trade Name *</label>
@@ -347,12 +401,9 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.name}
             onChange={handleChange}
             placeholder="My Awesome Trade"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.name ? "border-red-500" : "border-gray-700"
-              }`}
+            className={`w-full p-2 rounded bg-gray-800 border ${errors.name ? "border-red-500" : "border-gray-700"}`}
           />
-          {errors.name && (
-            <p className="text-red-400 text-xs mt-1">{errors.name}</p>
-          )}
+          {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
         </div>
 
         {/* Day */}
@@ -380,6 +431,68 @@ const TradeForm = ({ isEdit = false }) => {
           </select>
         </div>
 
+        {/* Entry Rules */}
+        <div className="col-span-2 bg-gray-800 p-4 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2 text-emerald-400">Entry Rules</h3>
+          {errors.entry_rules && <p className="text-red-400 text-xs mb-2">{errors.entry_rules}</p>}
+          {strategy.entry_rules.length > 0 ? (
+            <ul className="space-y-2">
+              {strategy.entry_rules.map((rule, index) => (
+                <li key={`entry-${index}`} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`entry-rule-${index}`}
+                    checked={form.entry_rules.includes(rule)}
+                    onChange={() => {
+                      const newRules = form.entry_rules.includes(rule)
+                        ? form.entry_rules.filter(r => r !== rule)
+                        : [...form.entry_rules, rule];
+                      setForm(prev => ({ ...prev, entry_rules: newRules }));
+                    }}
+                    className="mr-2 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <label htmlFor={`entry-rule-${index}`} className="text-sm">
+                    {rule}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-400 text-sm">No entry rules defined for this strategy</p>
+          )}
+        </div>
+
+        {/* Exit Rules */}
+        <div className="col-span-2 bg-gray-800 p-4 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2 text-emerald-400">Exit Rules</h3>
+          {errors.exit_rules && <p className="text-red-400 text-xs mb-2">{errors.exit_rules}</p>}
+          {strategy.exit_rules.length > 0 ? (
+            <ul className="space-y-2">
+              {strategy.exit_rules.map((rule, index) => (
+                <li key={`exit-${index}`} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`exit-rule-${index}`}
+                    checked={form.exit_rules.includes(rule)}
+                    onChange={() => {
+                      const newRules = form.exit_rules.includes(rule)
+                        ? form.exit_rules.filter(r => r !== rule)
+                        : [...form.exit_rules, rule];
+                      setForm(prev => ({ ...prev, exit_rules: newRules }));
+                    }}
+                    className="mr-2 h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <label htmlFor={`exit-rule-${index}`} className="text-sm">
+                    {rule}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-400 text-sm">No exit rules defined for this strategy</p>
+          )}
+        </div>
+
         {/* Entry Price */}
         <div className="col-span-1">
           <label className="block text-sm font-medium mb-1">Entry Price *</label>
@@ -390,12 +503,9 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.entry}
             onChange={handleChange}
             placeholder="100.50"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.entry ? "border-red-500" : "border-gray-700"
-              }`}
+            className={`w-full p-2 rounded bg-gray-800 border ${errors.entry ? "border-red-500" : "border-gray-700"}`}
           />
-          {errors.entry && (
-            <p className="text-red-400 text-xs mt-1">{errors.entry}</p>
-          )}
+          {errors.entry && <p className="text-red-400 text-xs mt-1">{errors.entry}</p>}
         </div>
 
         {/* Exit Price */}
@@ -408,12 +518,9 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.exit}
             onChange={handleChange}
             placeholder="105.75"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.exit ? "border-red-500" : "border-gray-700"
-              }`}
+            className={`w-full p-2 rounded bg-gray-800 border ${errors.exit ? "border-red-500" : "border-gray-700"}`}
           />
-          {errors.exit && (
-            <p className="text-red-400 text-xs mt-1">{errors.exit}</p>
-          )}
+          {errors.exit && <p className="text-red-400 text-xs mt-1">{errors.exit}</p>}
         </div>
 
         {/* Stop Loss */}
@@ -426,12 +533,9 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.stop_loss}
             onChange={handleChange}
             placeholder="95.25"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.stop_loss ? "border-red-500" : "border-gray-700"
-              }`}
+            className={`w-full p-2 rounded bg-gray-800 border ${errors.stop_loss ? "border-red-500" : "border-gray-700"}`}
           />
-          {errors.stop_loss && (
-            <p className="text-red-400 text-xs mt-1">{errors.stop_loss}</p>
-          )}
+          {errors.stop_loss && <p className="text-red-400 text-xs mt-1">{errors.stop_loss}</p>}
         </div>
 
         {/* Shares */}
@@ -443,12 +547,9 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.shares}
             onChange={handleChange}
             placeholder="100"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.shares ? "border-red-500" : "border-gray-700"
-              }`}
+            className={`w-full p-2 rounded bg-gray-800 border ${errors.shares ? "border-red-500" : "border-gray-700"}`}
           />
-          {errors.shares && (
-            <p className="text-red-400 text-xs mt-1">{errors.shares}</p>
-          )}
+          {errors.shares && <p className="text-red-400 text-xs mt-1">{errors.shares}</p>}
         </div>
 
         {/* Charges */}
@@ -461,12 +562,9 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.charges}
             onChange={handleChange}
             placeholder="20.50"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.charges ? "border-red-500" : "border-gray-700"
-              }`}
+            className={`w-full p-2 rounded bg-gray-800 border ${errors.charges ? "border-red-500" : "border-gray-700"}`}
           />
-          {errors.charges && (
-            <p className="text-red-400 text-xs mt-1">{errors.charges}</p>
-          )}
+          {errors.charges && <p className="text-red-400 text-xs mt-1">{errors.charges}</p>}
         </div>
 
         {/* Target */}
@@ -485,14 +583,15 @@ const TradeForm = ({ isEdit = false }) => {
 
         {/* Entry Date */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-1">Entry Date</label>
+          <label className="block text-sm font-medium mb-1">Entry Date *</label>
           <input
             type="date"
             name="entry_date"
             value={form.entry_date}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className={`w-full p-2 rounded bg-gray-800 border ${errors.entry_date ? "border-red-500" : "border-gray-700"}`}
           />
+          {errors.entry_date && <p className="text-red-400 text-xs mt-1">{errors.entry_date}</p>}
         </div>
 
         {/* Exit Date */}
@@ -503,8 +602,9 @@ const TradeForm = ({ isEdit = false }) => {
             name="exit_date"
             value={form.exit_date}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className={`w-full p-2 rounded bg-gray-800 border ${errors.exit_date ? "border-red-500" : "border-gray-700"}`}
           />
+          {errors.exit_date && <p className="text-red-400 text-xs mt-1">{errors.exit_date}</p>}
         </div>
 
         {/* Time */}
@@ -647,41 +747,25 @@ const TradeForm = ({ isEdit = false }) => {
             </div>
             <div className="bg-gray-700 p-2 rounded">
               <div className="text-gray-400">Gross P&L</div>
-              <div
-                className={`font-bold ${calculated.gross_pnl >= 0
-                    ? "text-green-400"
-                    : "text-red-400"
-                  }`}
-              >
+              <div className={`font-bold ${calculated.gross_pnl >= 0 ? "text-green-400" : "text-red-400"}`}>
                 ₹{calculated.gross_pnl.toFixed(2)}
               </div>
             </div>
             <div className="bg-gray-700 p-2 rounded">
               <div className="text-gray-400">Net P&L</div>
-              <div
-                className={`font-bold ${calculated.net_pnl >= 0 ? "text-green-400" : "text-red-400"
-                  }`}
-              >
+              <div className={`font-bold ${calculated.net_pnl >= 0 ? "text-green-400" : "text-red-400"}`}>
                 ₹{calculated.net_pnl.toFixed(2)}
               </div>
             </div>
             <div className="bg-gray-700 p-2 rounded">
               <div className="text-gray-400">% P&L</div>
-              <div
-                className={`font-bold ${calculated.percent_pnl >= 0
-                    ? "text-green-400"
-                    : "text-red-400"
-                  }`}
-              >
+              <div className={`font-bold ${calculated.percent_pnl >= 0 ? "text-green-400" : "text-red-400"}`}>
                 {calculated.percent_pnl.toFixed(2)}%
               </div>
             </div>
             <div className="bg-gray-700 p-2 rounded">
               <div className="text-gray-400">ROI</div>
-              <div
-                className={`font-bold ${calculated.roi >= 0 ? "text-green-400" : "text-red-400"
-                  }`}
-              >
+              <div className={`font-bold ${calculated.roi >= 0 ? "text-green-400" : "text-red-400"}`}>
                 {calculated.roi.toFixed(2)}
               </div>
             </div>

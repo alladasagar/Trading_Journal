@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { fetchEvents } from "../Apis/Events";
-import { fetchAllTrades, fetchTradesByDate } from "../Apis/Trades";
+import { fetchTradesByDate } from "../Apis/Trades";
+import Loader from "../Components/ui/Loader"; 
 import dayjs from "dayjs";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts";
+
 
 const HomePage = () => {
   const [events, setEvents] = useState([]);
@@ -14,13 +25,13 @@ const HomePage = () => {
   });
 
   const [dateRange, setDateRange] = useState({
-    startDate: dayjs().subtract(1, 'month').format('YYYY-MM-DD'),
-    endDate: dayjs().format('YYYY-MM-DD')
+    startDate: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
+    endDate: dayjs().format("YYYY-MM-DD")
   });
 
   const handleDateChange = (e) => {
     const { name, value } = e.target;
-    setDateRange(prev => ({
+    setDateRange((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -28,17 +39,21 @@ const HomePage = () => {
 
   useEffect(() => {
     const loadEvents = async () => {
-      setIsLoading(prev => ({ ...prev, events: true }));
+      setIsLoading((prev) => ({ ...prev, events: true }));
       try {
         const result = await fetchEvents();
         if (result.success) {
           const today = dayjs().format("YYYY-MM-DD");
-          setEvents(result.events.filter(e => dayjs(e.date).format("YYYY-MM-DD") === today));
+          setEvents(
+            result.events.filter(
+              (e) => dayjs(e.date).format("YYYY-MM-DD") === today
+            )
+          );
         }
       } catch (error) {
         console.error("Error loading events:", error);
       } finally {
-        setIsLoading(prev => ({ ...prev, events: false }));
+        setIsLoading((prev) => ({ ...prev, events: false }));
       }
     };
 
@@ -47,9 +62,12 @@ const HomePage = () => {
 
   useEffect(() => {
     const loadTrades = async () => {
-      setIsLoading(prev => ({ ...prev, trades: true }));
+      setIsLoading((prev) => ({ ...prev, trades: true }));
       try {
-        const result = await fetchTradesByDate(dateRange.startDate, dateRange.endDate);
+        const result = await fetchTradesByDate(
+          dateRange.startDate,
+          dateRange.endDate
+        );
         if (result.success) {
           setTrades(result.trades);
           const processedData = processPnlData(result.trades);
@@ -60,12 +78,55 @@ const HomePage = () => {
       } catch (error) {
         console.log("Something went Wrong", error);
       } finally {
-        setIsLoading(prev => ({ ...prev, trades: false }));
+        setIsLoading((prev) => ({ ...prev, trades: false }));
       }
     };
 
     loadTrades();
   }, [dateRange]);
+
+  const generateCalendarData = () => {
+    const startDate = dayjs(dateRange.startDate);
+    const endDate = dayjs(dateRange.endDate);
+    const daysInMonth = endDate.diff(startDate, "day") + 1;
+
+    const pnlByDate = trades.reduce((acc, trade) => {
+      const date = dayjs(trade.entry_date).format("YYYY-MM-DD");
+      if (!acc[date]) {
+        acc[date] = 0;
+      }
+      acc[date] += trade.net_pnl;
+      return acc;
+    }, {});
+
+    const calendarData = [];
+    let currentWeek = [];
+
+    for (let i = 0; i < daysInMonth; i++) {
+      const currentDate = startDate.add(i, "day");
+      const dateStr = currentDate.format("YYYY-MM-DD");
+      const dayOfWeek = currentDate.day();
+
+      if (dayOfWeek === 0 && currentWeek.length > 0) {
+        calendarData.push(currentWeek);
+        currentWeek = [];
+      }
+
+      const pnl = pnlByDate[dateStr] || 0;
+      currentWeek.push({
+        date: dateStr,
+        day: currentDate.date(),
+        pnl: parseFloat(pnl.toFixed(2)),
+        isCurrentMonth: true
+      });
+    }
+
+    if (currentWeek.length > 0) {
+      calendarData.push(currentWeek);
+    }
+
+    return calendarData;
+  };
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -73,10 +134,14 @@ const HomePage = () => {
       const isPositive = pnlValue >= 0;
 
       return (
-        <div className="custom-tooltip">
-          <p className="tooltip-date">{label}</p>
-          <p className={`tooltip-value ${isPositive ? 'positive' : 'negative'}`}>
-            Net PNL: ${pnlValue.toFixed(2)}
+        <div className="custom-tooltip bg-gray-800 border border-gray-700 p-3 rounded shadow-lg">
+          <p className="tooltip-date text-[#27c284] font-medium">{label}</p>
+          <p
+            className={`tooltip-value ${
+              isPositive ? "text-green-400" : "text-red-400"
+            } font-bold`}
+          >
+            Net PNL: ₹{pnlValue.toFixed(2)}
           </p>
         </div>
       );
@@ -84,9 +149,28 @@ const HomePage = () => {
     return null;
   };
 
+  const CalendarDayTooltip = ({ date, pnl }) => {
+    const isPositive = pnl >= 0;
+
+    return (
+      <div className="calendar-tooltip bg-gray-800 border border-gray-700 p-2 rounded shadow-lg text-xs">
+        <p className="text-[#27c284] font-medium">
+          {dayjs(date).format("MMM D, YYYY")}
+        </p>
+        <p
+          className={`${
+            isPositive ? "text-green-400" : "text-red-400"
+          } font-bold`}
+        >
+          Net PNL: ₹{pnl.toFixed(2)}
+        </p>
+      </div>
+    );
+  };
+
   const processPnlData = (trades) => {
     const pnlByDate = trades.reduce((acc, trade) => {
-      const date = dayjs(trade.entry_date).format('MMM D');
+      const date = dayjs(trade.entry_date).format("MMM D");
       if (!acc[date]) {
         acc[date] = 0;
       }
@@ -100,222 +184,175 @@ const HomePage = () => {
     }));
   };
 
+  const calendarData = generateCalendarData();
+
   return (
-    <div className="dashboard-container bg-gray-800">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6">
       {/* Events Marquee */}
-      <div className="events-marquee">
-        {isLoading.events ? (
-          <div className="loading-text">Loading events...</div>
-        ) : (
-          <marquee>
-            {events.length > 0
-              ? events.map((e, index) => (
-                <span key={index} className="event-item">
-                  {e.name} - {e.venue} ({dayjs(e.date).format("h:mm A")})
-                </span>
-              ))
-              : <span className="no-events">No events scheduled for today</span>}
-          </marquee>
-        )}
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6">
+        <div className="p-4">
+          {isLoading.events ? (
+            <Loader />
+          ) : (
+            <div>
+              <h2 className="text-xl font-semibold text-[rgb(232,244,239)] mb-2 text-center">
+                Today's Events
+              </h2>
+              <marquee>
+                {events.length > 0 ? (
+                  events.map((e, index) => (
+                    <span key={index} className="text-[#27c284] mx-8 text-2xl">
+                      {e.name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-400">
+                    No events scheduled for today
+                  </span>
+                )}
+              </marquee>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Date Range Filter */}
-      <div className="date-filter-container">
-        <div className="date-filter">
-          <label className="date-label">
-            Start Date:
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-gray-300 mb-1 text-sm font-medium">
+              Start Date:
+            </label>
             <input
               type="date"
               name="startDate"
               value={dateRange.startDate}
               onChange={handleDateChange}
               max={dateRange.endDate}
-              className="date-input"
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
             />
-          </label>
-          <label className="date-label">
-            End Date:
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-gray-300 mb-1 text-sm font-medium">
+              End Date:
+            </label>
             <input
               type="date"
               name="endDate"
               value={dateRange.endDate}
               onChange={handleDateChange}
               min={dateRange.startDate}
-              max={dayjs().format('YYYY-MM-DD')}
-              className="date-input"
+              max={dayjs().format("YYYY-MM-DD")}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
             />
-          </label>
+          </div>
         </div>
       </div>
 
       {/* PNL Line Chart */}
-      <div className="chart-container">
-        <h3 className="chart-title">Daily Net PNL</h3>
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4 sm:p-6">
+        <h3 className="text-lg sm:text-xl font-medium text-[#27c284] mb-4">
+          Daily Net PNL
+        </h3>
         {isLoading.trades ? (
-          <div className="loading-text">Loading PNL data...</div>
+          <Loader />
         ) : pnlData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart
-              data={pnlData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis
-                dataKey="date"
-                stroke="#333"
-                tick={{ fill: '#333' }}
-              />
-              <YAxis
-                stroke="#333"
-                tick={{ fill: '#333' }}
-              />
-              <Tooltip content={<CustomTooltip />} />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="pnl"
-                stroke="#4CAF50"
-                strokeWidth={3}
-                activeDot={{ r: 8, fill: '#4CAF50' }}
-                name="Net PNL"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="h-80 sm:h-96">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={pnlData}
+                margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis dataKey="date" stroke="#9CA3AF" tick={{ fill: "#9CA3AF" }} />
+                <YAxis stroke="#9CA3AF" tick={{ fill: "#9CA3AF" }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="pnl"
+                  stroke="#27c284"
+                  strokeWidth={3}
+                  activeDot={{ r: 8, fill: "#27c284" }}
+                  name="Net PNL"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         ) : (
-          <div className="no-data">No PNL data available</div>
+          <div className="text-center text-gray-400 py-8">
+            No PNL data available
+          </div>
         )}
       </div>
 
-      <style jsx>{`
-  .dashboard-container {
-    padding: 20px;
-    font-family: 'Roboto', sans-serif;
-    background-color: #2d3748; /* bg-gray-800 */
-    min-height: 100vh;
-    color: #e2e8f0; /* Light text for dark background */
-  }
-  
-  .events-marquee {
-    background-color: #4a5568; /* bg-gray-700 */
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 24px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    border: 1px solid #4a5568;
-  }
-  
-  marquee {
-    height: 30px;
-    line-height: 30px;
-  }
-  
-  .event-item {
-    margin-right: 32px;
-    color: #63b3ed; /* blue-400 */
-    font-weight: 500;
-  }
-  
-  .no-events {
-    color: #a0aec0; /* gray-400 */
-    font-style: italic;
-  }
-  
-  .date-filter-container {
-    background-color: #4a5568; /* bg-gray-700 */
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 24px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    border: 1px solid #4a5568;
-  }
-  
-  .date-filter {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  
-  .date-label {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-weight: 500;
-    color: #e2e8f0; /* gray-200 */
-  }
-  
-  .date-input {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid #4a5568;
-    background-color: #2d3748;
-    color: #e2e8f0;
-    font-family: inherit;
-    transition: border 0.3s;
-  }
-  
-  .date-input:focus {
-    outline: none;
-    border-color: #63b3ed; /* blue-400 */
-  }
-  
-  .chart-container {
-    background-color: #4a5568; /* bg-gray-700 */
-    padding: 24px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    border: 1px solid #4a5568;
-  }
-  
-  .chart-title {
-    margin-top: 0;
-    margin-bottom: 20px;
-    color: #e2e8f0;
-    font-size: 1.5rem;
-    font-weight: 500;
-  }
-  
-  .loading-text {
-    color: #a0aec0; /* gray-400 */
-    text-align: center;
-    padding: 20px;
-  }
-  
-  .no-data {
-    color: #a0aec0; /* gray-400 */
-    text-align: center;
-    padding: 20px;
-    font-style: italic;
-  }
-  
-  .custom-tooltip {
-    background-color: #2d3748;
-    padding: 10px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    border: 1px solid #4a5568;
-  }
-  
-  .tooltip-date {
-    margin: 0;
-    font-weight: bold;
-    color: #e2e8f0;
-  }
-  
-  .tooltip-value {
-    margin: 5px 0 0 0;
-    font-weight: bold;
-  }
-  
-  .tooltip-value.positive {
-    color: #68d391; /* green-400 */
-  }
-  
-  .tooltip-value.negative {
-    color: #fc8181; /* red-300 */
-  }
-`}</style>
+      {/* Calendar Component */}
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-4 sm:p-6 cursor-pointer">
+        <h3 className="text-lg sm:text-xl font-medium text-[#27c284] mb-4">
+          Daily PNL Calendar
+        </h3>
+        {isLoading.trades ? (
+          <Loader />
+        ) : (
+          <div className="overflow-x-auto">
+            <div className="inline-block min-w-full">
+              <div className="calendar-grid">
+                <div className="calendar-header flex">
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                    (day) => (
+                      <div
+                        key={day}
+                        className="flex-1 text-center py-2 text-xs font-medium text-[#27c284]"
+                      >
+                        {day}
+                      </div>
+                    )
+                  )}
+                </div>
+                {calendarData.map((week, weekIndex) => (
+                  <div key={weekIndex} className="calendar-week flex">
+                    {week.map((day, dayIndex) => {
+                      const isProfit = day.pnl > 0;
+                      const isLoss = day.pnl < 0;
+                      const isNeutral = day.pnl === 0;
+
+                      return (
+                        <div
+                          key={dayIndex}
+                          className={`flex-1 min-w-[40px] sm:min-w-[60px] h-12 sm:h-16 border border-gray-700 relative
+                            ${
+                              isProfit
+                                ? "bg-green-900/30 hover:bg-green-900/50"
+                                : ""
+                            } 
+                            ${
+                              isLoss ? "bg-red-900/30 hover:bg-red-900/50" : ""
+                            }
+                            ${
+                              isNeutral
+                                ? "bg-gray-700/20 hover:bg-gray-700/40"
+                                : ""
+                            }
+                          `}
+                        >
+                          <div className="absolute top-1 right-1 text-xs text-gray-300">
+                            {day.day}
+                          </div>
+                          {day.pnl !== 0 && (
+                            <div className="calendar-day-pnl absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                              <CalendarDayTooltip date={day.date} pnl={day.pnl} />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

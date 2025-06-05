@@ -9,6 +9,7 @@ export const login = async (data) => {
     return {
       status: response.status,
       message: response.data.message,
+      token: response.data.token, // ✅ return token
     };
   } catch (error) {
     console.error("Login error:", error.response?.data || error.message);
@@ -18,3 +19,4 @@ export const login = async (data) => {
     };
   }
 };
+

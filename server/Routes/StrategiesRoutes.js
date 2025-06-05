@@ -1,6 +1,7 @@
 // backend/Routes/StrategiesRoutes.js
 import express from "express";
 import Strategy from "../Models/Strategy.js";
+import Trade from "../Models/Trade.js";
 
 const router = express.Router();
 
@@ -48,14 +49,22 @@ router.route('/strategies/:id')
       res.status(500).json({ error: "Error updating strategy" });
     }
   })
-  .delete(async (req, res) => { 
-    try {
-      await Strategy.findByIdAndDelete(req.params.id);
-      res.status(200).json({ message: "Strategy deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete strategy" });
-    }
-  });
+ .delete(async (req, res) => {
+  try {
+    const strategyId = req.params.id;
+
+    // Delete the strategy
+    await Strategy.findByIdAndDelete(strategyId);
+
+    // Delete all trades that reference this strategy
+    await Trade.deleteMany({ strategyId: strategyId });
+
+    res.status(200).json({ message: "Strategy and associated trades deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to delete strategy and associated trades" });
+  }
+});
 
   router.post('/addstrategy', async (req, res) => {
   try {

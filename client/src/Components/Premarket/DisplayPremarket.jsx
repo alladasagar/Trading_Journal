@@ -4,15 +4,18 @@ import { useToast } from "../context/ToastContext";
 import { useNavigate } from "react-router-dom";
 import { FiEdit, FiTrash2 } from "react-icons/fi";
 import ConfirmModal from "../ui/ConfirmModal";
+import Loader from "../ui/Loader"; // <-- import Loader
 
 const DisplayPremarket = () => {
   const [premarkets, setPremarkets] = useState([]);
+  const [loading, setLoading] = useState(false); // <-- loading state added
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [premarketToDelete, setPremarketToDelete] = useState(null);
   const { addToast } = useToast();
   const navigate = useNavigate();
 
   const loadPremarkets = async () => {
+    setLoading(true); // <-- start loading
     try {
       const data = await fetchPremarket();
       if (Array.isArray(data)) {
@@ -23,6 +26,8 @@ const DisplayPremarket = () => {
     } catch (error) {
       console.error("Error fetching premarket data:", error);
       addToast("Error loading premarket data", "error");
+    } finally {
+      setLoading(false); // <-- stop loading
     }
   };
 
@@ -52,6 +57,14 @@ const DisplayPremarket = () => {
   useEffect(() => {
     loadPremarkets();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4">

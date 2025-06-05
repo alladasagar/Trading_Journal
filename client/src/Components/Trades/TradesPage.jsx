@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { fetchTradesByStrategy, deleteTrade } from "../../Apis/Trades";
 import { useToast } from "../context/ToastContext";
 import ConfirmModal from "../ui/ConfirmModal"; // adjust path as needed
+import Loader from "../ui/Loader"; // import your Loader component
 
 const TradesPage = () => {
   const { id } = useParams();
@@ -59,15 +60,23 @@ const TradesPage = () => {
   };
 
   const toggleLeverage = (tradeId) => {
-  setLeverageOverrides((prevOverrides) => {
-    const current = prevOverrides[tradeId] || "default";
-    const newLeverage = current === "1x" ? "5x" : "1x";
-    return {
-      ...prevOverrides,
-      [tradeId]: newLeverage,
-    };
-  });
-};
+    setLeverageOverrides((prevOverrides) => {
+      const current = prevOverrides[tradeId] || "default";
+      const newLeverage = current === "1x" ? "5x" : "1x";
+      return {
+        ...prevOverrides,
+        [tradeId]: newLeverage,
+      };
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <Loader />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 bg-gray-900 min-h-screen">
@@ -81,9 +90,7 @@ const TradesPage = () => {
         </button>
       </div>
 
-      {loading ? (
-        <p className="text-gray-300">Loading trades...</p>
-      ) : trades.length === 0 ? (
+      {trades.length === 0 ? (
         <div className="bg-gray-800 p-6 rounded-lg text-center text-gray-400">
           No trades taken yet.
         </div>
@@ -133,19 +140,22 @@ const TradesPage = () => {
                       {trade.side}
                     </td>
                     <td
-                      className={`px-4 py-4 text-sm font-medium sm:px-6 ${trade.net_pnl >= 0 ? "text-green-400" : "text-red-400"
-                        }`}
+                      className={`px-4 py-4 text-sm font-medium sm:px-6 ${
+                        trade.net_pnl >= 0 ? "text-green-400" : "text-red-400"
+                      }`}
                     >
                       ₹{trade.net_pnl}
                     </td>
-                    
+
                     <td className="px-4 py-4 text-sm text-gray-300 sm:px-6">
                       {(() => {
                         const currentLeverage =
-                          leverageOverrides[trade._id] || (trade.capital && trade.capital < 20000 ? "1x" : "5x");
-                        const adjustedPercent = currentLeverage === "1x"
-                          ? (trade.percent_pnl / 5).toFixed(2)
-                          : trade.percent_pnl.toFixed(2);
+                          leverageOverrides[trade._id] ||
+                          (trade.capital && trade.capital < 20000 ? "1x" : "5x");
+                        const adjustedPercent =
+                          currentLeverage === "1x"
+                            ? (trade.percent_pnl / 5).toFixed(2)
+                            : trade.percent_pnl.toFixed(2);
                         return `${adjustedPercent}%`;
                       })()}
                     </td>
@@ -160,7 +170,8 @@ const TradesPage = () => {
                         onClick={() => toggleLeverage(trade._id)}
                         className="bg-gray-700 px-2 py-1 rounded hover:bg-gray-600"
                       >
-                        {leverageOverrides[trade._id] || (trade.capital && trade.capital < 20000 ? "1x" : "5x")}
+                        {leverageOverrides[trade._id] ||
+                          (trade.capital && trade.capital < 20000 ? "1x" : "5x")}
                       </button>
                     </td>
 

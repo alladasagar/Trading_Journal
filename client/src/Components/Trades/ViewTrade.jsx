@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchTradeById } from "../../Apis/Trades";
 import { useToast } from "../context/ToastContext";
+import Loader from "../ui/Loader";
 
 const ViewTrade = () => {
   const { id } = useParams();
@@ -10,6 +11,19 @@ const ViewTrade = () => {
 
   const [trade, setTrade] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const EMOJI_OPTIONS = [
+    { value: "😊", label: "Happy" },
+    { value: "😢", label: "Sad" },
+    { value: "😎", label: "Cool" },
+    { value: "🤯", label: "Mind blown" },
+    { value: "💰", label: "Money" },
+    { value: "📈", label: "Chart up" },
+    { value: "📉", label: "Chart down" },
+    { value: "🎯", label: "Target" },
+    { value: "🔥", label: "Fire" },
+    { value: "💎", label: "Diamond" },
+  ]
 
   useEffect(() => {
     const loadTrade = async () => {
@@ -32,14 +46,7 @@ const ViewTrade = () => {
     loadTrade();
   }, [id, addToast, navigate]);
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-      <div className="animate-pulse flex flex-col items-center">
-        <div className="h-8 w-8 bg-blue-600 rounded-full mb-2"></div>
-        <span>Loading trade details...</span>
-      </div>
-    </div>
-  );
+  if (loading) return <Loader message="Loading trade details..." />;
 
   if (!trade) return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
@@ -119,6 +126,40 @@ const ViewTrade = () => {
                 <span className="font-medium capitalize">{trade.day?.toLowerCase()}</span>
               </div>
             </div>
+          </div>
+
+          {/* Entry Rules Card */}
+          <div className="bg-gray-800 rounded-xl p-6 shadow-lg border-l-4 border-emerald-500">
+            <h3 className="text-xl font-semibold mb-4 text-emerald-300">Entry Rules</h3>
+            {trade.entry_rules?.length > 0 ? (
+              <ul className="space-y-2">
+                {trade.entry_rules.map((rule, index) => (
+                  <li key={`entry-rule-${index}`} className="flex items-start">
+                    <span className="text-emerald-400 mr-2">✓</span>
+                    <span className="text-gray-300">{rule}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 italic">No entry rules recorded</p>
+            )}
+          </div>
+
+          {/* Exit Rules Card */}
+          <div className="bg-gray-800 rounded-xl p-6 shadow-lg border-l-4 border-red-500">
+            <h3 className="text-xl font-semibold mb-4 text-red-300">Exit Rules</h3>
+            {trade.exit_rules?.length > 0 ? (
+              <ul className="space-y-2">
+                {trade.exit_rules.map((rule, index) => (
+                  <li key={`exit-rule-${index}`} className="flex items-start">
+                    <span className="text-red-400 mr-2">✗</span>
+                    <span className="text-gray-300">{rule}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 italic">No exit rules recorded</p>
+            )}
           </div>
 
           {/* Financial Details Card */}
@@ -214,7 +255,7 @@ const ViewTrade = () => {
             <div className="space-y-4">
               <div>
                 <h4 className="text-gray-400 mb-1">Mistakes</h4>
-                {trade.mistakes.length > 0 ? (
+                {trade.mistakes?.length > 0 ? (
                   <ul className="list-disc list-inside space-y-1 text-gray-300">
                     {trade.mistakes.map((mistake, index) => (
                       <li key={index}>{mistake}</li>
@@ -232,7 +273,21 @@ const ViewTrade = () => {
               </div>
               <div>
                 <h4 className="text-gray-400 mb-1">Emojis</h4>
-                <p className="text-2xl">{trade.emojis || "😐"}</p>
+                {trade.emojis && trade.emojis.length > 0 ? (
+                  <div className="flex flex-wrap gap-3 text-2xl">
+                    {trade.emojis.map((emoji, index) => {
+                      const emojiObj = EMOJI_OPTIONS.find(e => e.value === emoji);
+                      return (
+                        <div key={index} className="flex flex-col items-center text-center select-none">
+                          <span>{emoji}</span>
+                          <small className="text-xs text-gray-400">{emojiObj ? emojiObj.label : "Unknown"}</small>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-2xl">😐</p>
+                )}
               </div>
             </div>
           </div>
@@ -242,9 +297,9 @@ const ViewTrade = () => {
             <div className="bg-gray-800 rounded-xl p-6 shadow-lg border-l-4 border-indigo-500">
               <h3 className="text-xl font-semibold mb-4 text-indigo-300">Screenshot</h3>
               <div className="flex justify-center">
-                <img 
-                  src={trade.screenshot} 
-                  alt="Trade Screenshot" 
+                <img
+                  src={trade.screenshot}
+                  alt="Trade Screenshot"
                   className="rounded-lg max-h-80 object-contain cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => window.open(trade.screenshot, '_blank')}
                 />

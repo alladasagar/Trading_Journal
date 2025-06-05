@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useToast } from "../context/ToastContext";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../ui/ConfirmModal";
+import Loader from "../ui/Loader"; // imported Loader
 import { fetchStrategies, deleteStrategy } from "../../Apis/Strategies";
 import { FaEye, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 
@@ -9,11 +10,14 @@ const DisplayStrategy = () => {
   const [strategies, setStrategies] = useState([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [strategyToDelete, setStrategyToDelete] = useState(null);
+  const [loading, setLoading] = useState(false); // loading state
   const { addToast } = useToast();
   const navigate = useNavigate();
 
   const loadStrategies = async () => {
+    setLoading(true);
     const result = await fetchStrategies();
+    setLoading(false);
     if (result.success) {
       setStrategies(result.data);
     } else {
@@ -27,9 +31,11 @@ const DisplayStrategy = () => {
   };
 
   const handleDeleteConfirmed = async () => {
+    setLoading(true);
     const result = await deleteStrategy(strategyToDelete);
     setIsConfirmOpen(false);
     setStrategyToDelete(null);
+    setLoading(false);
     if (result.success) {
       addToast("Strategy deleted successfully", "success");
       setStrategies((prev) => prev.filter((s) => s._id !== strategyToDelete));
@@ -41,6 +47,14 @@ const DisplayStrategy = () => {
   useEffect(() => {
     loadStrategies();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[60vh]">
+        <Loader />
+      </div>
+    );
+  }
 
   if (strategies.length === 0) {
     return (
@@ -87,7 +101,6 @@ const DisplayStrategy = () => {
                     key={strategy._id}
                     className="hover:bg-gray-750 cursor-pointer"
                     onClick={(e) => {
-                      // Prevent row navigation if action icon is clicked
                       if (e.target.closest("button")) return;
                       navigate(`/strategies/${strategy._id}/trades`);
                     }}
@@ -120,7 +133,7 @@ const DisplayStrategy = () => {
                     <td className="px-4 py-4 text-sm sm:px-6">
                       <div
                         className="flex space-x-2 sm:space-x-3"
-                        onClick={(e) => e.stopPropagation()} // Prevent triggering row click
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <button
                           onClick={() => navigate(`/strategies/${strategy._id}`)}
@@ -148,7 +161,6 @@ const DisplayStrategy = () => {
                   </tr>
                 ))}
               </tbody>
-
             </table>
           </div>
         </div>
