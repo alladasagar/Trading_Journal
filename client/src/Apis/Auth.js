@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:5000";
+// const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://trading-journal-pi.vercel.app";
 
 export const login = async (data) => {
   console.log("Api reached data:", data);

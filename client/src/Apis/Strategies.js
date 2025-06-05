@@ -1,7 +1,8 @@
 // src/Apis/Strategies.js
 import axios from "axios";
 
-const BASE_URL = "http://localhost:5000"; // Or use import.meta.env.VITE_API_URL
+// const BASE_URL = "http://localhost:5000"; // Or use import.meta.env.VITE_API_URL
+const BASE_URL = "https://trading-journal-pi.vercel.app";
 
 // ✅ Add a new strategy
 export const addStrategy = async (strategyName, entryRules, exitRules) => {

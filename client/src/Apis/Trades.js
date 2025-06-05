@@ -2,7 +2,8 @@ import axios from "axios";
 import dayjs from "dayjs";
 
 
-const BASE_URL = "http://localhost:5000";
+// const BASE_URL = "http://localhost:5000";
+const BASE_URL = "https://trading-journal-pi.vercel.app";
 
 // Add a trade for a given strategy ID
 export const addTrade = async (strategyId, data) => {
