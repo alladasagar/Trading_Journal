@@ -16,9 +16,13 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: "http://localhost:5173", // your frontend origin
+  origin: [
+    "http://localhost:5173",               // for local dev
+    "https://trading-journal-pi.vercel.app" // for Vercel frontend
+  ],
   credentials: true
 }));
+
 app.use(express.json());
 
 app.use("/", authRoutes);
