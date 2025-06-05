@@ -8,6 +8,7 @@ import strategyRoutes from "./Routes/StrategiesRoutes.js";
 import premarketRoutes from "./Routes/PremarketRoutes.js";
 import tradeRoutes from "./Routes/tradeRoutes.js"
 import EventRoutes from "./Routes/EventRoutes.js";
+import User from "./Models/User.js";
 
 dotenv.config();
 connectDB();
