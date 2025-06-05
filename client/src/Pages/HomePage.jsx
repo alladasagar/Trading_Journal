@@ -3,6 +3,10 @@ import { fetchEvents } from "../Apis/Events";
 import { fetchTradesByDate } from "../Apis/Trades";
 import Loader from "../Components/ui/Loader"; 
 import dayjs from "dayjs";
+import { FaChartLine } from "react-icons/fa";
+import { SiZerodha, SiTradingview } from "react-icons/si";
+import { MdShowChart } from "react-icons/md";
+import { TbBulb } from "react-icons/tb";
 import {
   LineChart,
   Line,
@@ -188,6 +192,56 @@ const HomePage = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
+        <h2 className="text-xl font-semibold text-[#27c284] mb-4 text-center">Quick Access</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-center">
+          <a
+            href="https://kite.zerodha.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:scale-105 transition-transform duration-200 bg-gray-700 p-4 rounded-lg border border-gray-600 flex flex-col items-center text-white"
+          >
+            <SiZerodha size={28} className="mb-2 text-[#27c284]" />
+            <span>Zerodha</span>
+          </a>
+          <a
+            href="https://groww.in/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:scale-105 transition-transform duration-200 bg-gray-700 p-4 rounded-lg border border-gray-600 flex flex-col items-center text-white"
+          >
+            <MdShowChart size={28} className="mb-2 text-[#27c284]" />
+            <span>Groww</span>
+          </a>
+          <a
+            href="https://in.tradingview.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:scale-105 transition-transform duration-200 bg-gray-700 p-4 rounded-lg border border-gray-600 flex flex-col items-center text-white"
+          >
+            <SiTradingview size={28} className="mb-2 text-[#27c284]" />
+            <span>TradingView</span>
+          </a>
+          <a
+            href="https://sensibull.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:scale-105 transition-transform duration-200 bg-gray-700 p-4 rounded-lg border border-gray-600 flex flex-col items-center text-white"
+          >
+            <TbBulb size={28} className="mb-2 text-[#27c284]" />
+            <span>Sensibull</span>
+          </a>
+          <a
+            href="https://trade.fyers.in/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:scale-105 transition-transform duration-200 bg-gray-700 p-4 rounded-lg border border-gray-600 flex flex-col items-center text-white"
+          >
+            <FaChartLine size={28} className="mb-2 text-[#27c284]" />
+            <span>Fyers</span>
+          </a>
+        </div>
+      </div>
       {/* Events Marquee */}
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6">
         <div className="p-4">

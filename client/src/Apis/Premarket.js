@@ -49,3 +49,12 @@ export const deletePremarket = async (id) => {
   }
 };
 
+export const fetchPremarketPlans = async () => {
+  try {
+    const response = await axios.get(`${BASE_URL}/getpremarketplans`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, message: "Failed to fetch premarket plans" };
+  }
+  
+}
