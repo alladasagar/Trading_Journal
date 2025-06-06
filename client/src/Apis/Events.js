@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // const BASE_URL = "http://localhost:5000";
-const BASE_URL = "https://trading-journal-pi.vercel.app";
+const BASE_URL = "https://trading-journal-zv1a.onrender.com";
 
 export const fetchEvents = async () => {
     try {
