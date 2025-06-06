@@ -14,6 +14,7 @@ import ViewTrade from './Components/Trades/ViewTrade';
 import EventsPage from './Components/Events/EventsPage';
 import EventForm from './Components/Events/EventForm';
 import PrivateRoute from './Components/context/PrivateRoute'; 
+//this is updated
 
 function App() {
   return (
