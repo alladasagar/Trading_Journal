@@ -67,7 +67,7 @@ const DisplayStrategy = () => {
         </p>
         <button
           className="bg-[#27c284] text-white px-4 py-2 sm:px-6 sm:py-3 rounded-md hover:bg-[#1fa769] flex items-center mx-auto"
-          onClick={() => navigate("/add-strategy")}
+          onClick={() => navigate("/addstrategy")}
         >
           <FaPlus className="mr-2" />
           Add Your First Strategy
