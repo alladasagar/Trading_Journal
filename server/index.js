@@ -9,9 +9,36 @@ import strategyRoutes from "./Routes/StrategiesRoutes.js";
 import premarketRoutes from "./Routes/PremarketRoutes.js";
 import tradeRoutes from "./Routes/tradeRoutes.js";
 import EventRoutes from "./Routes/EventRoutes.js";
+// import bcrypt from "bcryptjs";
+// import User from "./Models/User.js"; // Adjust path if needed
+
 
 dotenv.config();
 connectDB();
+
+// Create predefined user if not exists
+// const createPredefinedUser = async () => {
+//   const existingUser = await User.findOne({ email: "nallahimanth@gmail.com" });
+
+//   if (!existingUser) {
+//     const hashedPassword = await bcrypt.hash("Kuttna@1", 10);
+
+//     const newUser = new User({
+//       name: "Himanth Nalla",
+//       email: "nallahimanth@gmail.com",
+//       password: hashedPassword,
+//     });
+
+//     await newUser.save();
+//     console.log("✅ Predefined user created: Himanth Nalla");
+//   } else {
+//     console.log("ℹ️ Predefined user already exists.");
+//   }
+// };
+
+// createPredefinedUser().catch((err) =>
+//   console.error("Error creating predefined user:", err)
+// );
 
 const app = express();
 const PORT = process.env.PORT || 5000;
