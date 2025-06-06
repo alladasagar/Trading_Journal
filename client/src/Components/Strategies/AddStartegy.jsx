@@ -73,7 +73,7 @@ const AddStrategy = () => {
         ? await updateStrategy(id, payload)
         : await addStrategy(strategyName, entryRules, exitRules);
 
-      if (res.status === 200 || res.success) {
+      if (res.status === 201 || res.success) {
         addToast(`Strategy ${isEdit ? "updated" : "saved"}`, "success");
         setTimeout(() => navigate("/strategies"), 800);
       } else {

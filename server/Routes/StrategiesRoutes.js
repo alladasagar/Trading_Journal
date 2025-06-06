@@ -44,7 +44,7 @@ router.route('/strategies/:id')
         req.body, 
         { new: true }
       );
-      res.status(200).json(strategy);
+      res.status(201).json(strategy);
     } catch (err) {
       res.status(500).json({ error: "Error updating strategy" });
     }
