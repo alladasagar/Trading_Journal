@@ -3,7 +3,7 @@ import { fetchEvents } from "../Apis/Events";
 import { fetchTradesByDate } from "../Apis/Trades";
 import Loader from "../Components/ui/Loader"; 
 import dayjs from "dayjs";
-import { FaChartLine } from "react-icons/fa";
+import { FaChartLine, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { SiZerodha, SiTradingview } from "react-icons/si";
 import { MdShowChart } from "react-icons/md";
 import { TbBulb } from "react-icons/tb";
@@ -18,7 +18,6 @@ import {
   ResponsiveContainer
 } from "recharts";
 
-
 const HomePage = () => {
   const [events, setEvents] = useState([]);
   const [trades, setTrades] = useState([]);
@@ -28,6 +27,7 @@ const HomePage = () => {
     trades: false
   });
 
+  const [currentMonth, setCurrentMonth] = useState(dayjs());
   const [dateRange, setDateRange] = useState({
     startDate: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
     endDate: dayjs().format("YYYY-MM-DD")
@@ -41,29 +41,16 @@ const HomePage = () => {
     }));
   };
 
-  useEffect(() => {
-    const loadEvents = async () => {
-      setIsLoading((prev) => ({ ...prev, events: true }));
-      try {
-        const result = await fetchEvents();
-        if (result.success) {
-          const today = dayjs().format("YYYY-MM-DD");
-          setEvents(
-            result.events.filter(
-              (e) => dayjs(e.date).format("YYYY-MM-DD") === today
-            )
-          );
-        }
-      } catch (error) {
-        console.error("Error loading events:", error);
-      } finally {
-        setIsLoading((prev) => ({ ...prev, events: false }));
-      }
-    };
+  const navigateMonth = (direction) => {
+    const newMonth = direction === 'prev' 
+      ? currentMonth.subtract(1, 'month') 
+      : currentMonth.add(1, 'month');
+    
+    setCurrentMonth(newMonth);
+    loadCalendarTrades(newMonth);
+  };
 
-    loadEvents();
-  }, []);
-
+  // Load trades for date range (independent of calendar)
   useEffect(() => {
     const loadTrades = async () => {
       setIsLoading((prev) => ({ ...prev, trades: true }));
@@ -89,13 +76,26 @@ const HomePage = () => {
     loadTrades();
   }, [dateRange]);
 
-  const generateCalendarData = () => {
-    const startDate = dayjs(dateRange.startDate);
-    const endDate = dayjs(dateRange.endDate);
-    const daysInMonth = endDate.diff(startDate, "day") + 1;
+  // Load trades specifically for calendar view
+  const loadCalendarTrades = async (month) => {
+    const startDate = month.startOf('month').format("YYYY-MM-DD");
+    const endDate = month.endOf('month').format("YYYY-MM-DD");
+    
+    try {
+      const result = await fetchTradesByDate(startDate, endDate);
+      if (result.success) {
+        // We don't update the main trades state here, just use for calendar
+        return result.trades;
+      }
+    } catch (error) {
+      console.log("Error loading calendar trades:", error);
+      return [];
+    }
+  };
 
+  const processPnlData = (trades) => {
     const pnlByDate = trades.reduce((acc, trade) => {
-      const date = dayjs(trade.entry_date).format("YYYY-MM-DD");
+      const date = dayjs(trade.entry_date).format("MMM D");
       if (!acc[date]) {
         acc[date] = 0;
       }
@@ -103,34 +103,99 @@ const HomePage = () => {
       return acc;
     }, {});
 
+    return Object.entries(pnlByDate).map(([date, pnl]) => ({
+      date,
+      pnl: parseFloat(pnl.toFixed(2))
+    }));
+  };
+
+  const generateCalendarData = async () => {
+    const startOfMonth = currentMonth.startOf('month');
+    const endOfMonth = currentMonth.endOf('month');
+    const daysInMonth = endOfMonth.date();
+    const startDay = startOfMonth.day();
+    const endDay = endOfMonth.day();
+    const daysFromPrevMonth = startDay;
+    const daysFromNextMonth = 6 - endDay;
+    
+    // Get trades specifically for this month
+    const calendarTrades = await loadCalendarTrades(currentMonth);
+    
+    const pnlByDate = calendarTrades.reduce((acc, trade) => {
+      const date = dayjs(trade.entry_date).format("YYYY-MM-DD");
+      if (!acc[date]) {
+        acc[date] = 0;
+      }
+      acc[date] += trade.net_pnl;
+      return acc;
+    }, {});
+    
     const calendarData = [];
     let currentWeek = [];
-
-    for (let i = 0; i < daysInMonth; i++) {
-      const currentDate = startDate.add(i, "day");
-      const dateStr = currentDate.format("YYYY-MM-DD");
-      const dayOfWeek = currentDate.day();
-
-      if (dayOfWeek === 0 && currentWeek.length > 0) {
-        calendarData.push(currentWeek);
-        currentWeek = [];
-      }
-
+    
+    // Previous month days
+    for (let i = 0; i < daysFromPrevMonth; i++) {
+      const date = startOfMonth.subtract(daysFromPrevMonth - i, 'day');
+      currentWeek.push({
+        date: date.format("YYYY-MM-DD"),
+        day: date.date(),
+        pnl: null,
+        isCurrentMonth: false
+      });
+    }
+    
+    // Current month days
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = startOfMonth.date(i);
+      const dateStr = date.format("YYYY-MM-DD");
       const pnl = pnlByDate[dateStr] || 0;
+      
       currentWeek.push({
         date: dateStr,
-        day: currentDate.date(),
+        day: i,
         pnl: parseFloat(pnl.toFixed(2)),
         isCurrentMonth: true
       });
+      
+      if (currentWeek.length === 7 || i === daysInMonth) {
+        calendarData.push(currentWeek);
+        currentWeek = [];
+      }
     }
-
+    
+    // Next month days
+    for (let i = 1; i <= daysFromNextMonth; i++) {
+      const date = endOfMonth.add(i, 'day');
+      currentWeek.push({
+        date: date.format("YYYY-MM-DD"),
+        day: date.date(),
+        pnl: null,
+        isCurrentMonth: false
+      });
+      
+      if (currentWeek.length === 7) {
+        calendarData.push(currentWeek);
+        currentWeek = [];
+      }
+    }
+    
     if (currentWeek.length > 0) {
       calendarData.push(currentWeek);
     }
-
+    
     return calendarData;
   };
+
+  const [calendarData, setCalendarData] = useState([]);
+
+  // Load calendar data when month changes
+  useEffect(() => {
+    const loadData = async () => {
+      const data = await generateCalendarData();
+      setCalendarData(data);
+    };
+    loadData();
+  }, [currentMonth]);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -153,45 +218,9 @@ const HomePage = () => {
     return null;
   };
 
-  const CalendarDayTooltip = ({ date, pnl }) => {
-    const isPositive = pnl >= 0;
-
-    return (
-      <div className="calendar-tooltip bg-gray-800 border border-gray-700 p-2 rounded shadow-lg text-xs">
-        <p className="text-[#27c284] font-medium">
-          {dayjs(date).format("MMM D, YYYY")}
-        </p>
-        <p
-          className={`${
-            isPositive ? "text-green-400" : "text-red-400"
-          } font-bold`}
-        >
-          Net PNL: ₹{pnl.toFixed(2)}
-        </p>
-      </div>
-    );
-  };
-
-  const processPnlData = (trades) => {
-    const pnlByDate = trades.reduce((acc, trade) => {
-      const date = dayjs(trade.entry_date).format("MMM D");
-      if (!acc[date]) {
-        acc[date] = 0;
-      }
-      acc[date] += trade.net_pnl;
-      return acc;
-    }, {});
-
-    return Object.entries(pnlByDate).map(([date, pnl]) => ({
-      date,
-      pnl: parseFloat(pnl.toFixed(2))
-    }));
-  };
-
-  const calendarData = generateCalendarData();
-
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
+      {/* Quick Access Links */}
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
         <h2 className="text-xl font-semibold text-[#27c284] mb-4 text-center">Quick Access</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-center">
@@ -242,6 +271,7 @@ const HomePage = () => {
           </a>
         </div>
       </div>
+
       {/* Events Marquee */}
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6">
         <div className="p-4">
@@ -341,69 +371,89 @@ const HomePage = () => {
       </div>
 
       {/* Calendar Component */}
-      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-4 sm:p-6 cursor-pointer">
-        <h3 className="text-lg sm:text-xl font-medium text-[#27c284] mb-4">
-          Daily PNL Calendar
-        </h3>
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-4 sm:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <button 
+            onClick={() => navigateMonth('prev')}
+            className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+          >
+            <FaChevronLeft className="text-[#27c284]" />
+          </button>
+          <h3 className="text-lg sm:text-xl font-medium text-[#27c284]">
+            {currentMonth.format('MMMM YYYY')}
+          </h3>
+          <button 
+            onClick={() => navigateMonth('next')}
+            className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+          >
+            <FaChevronRight className="text-[#27c284]" />
+          </button>
+        </div>
+        
         {isLoading.trades ? (
           <Loader />
         ) : (
           <div className="overflow-x-auto">
-            <div className="inline-block min-w-full">
-              <div className="calendar-grid">
-                <div className="calendar-header flex">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr>
                   {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
                     (day) => (
-                      <div
+                      <th
                         key={day}
-                        className="flex-1 text-center py-2 text-xs font-medium text-[#27c284]"
+                        className="text-center py-2 text-xs font-medium text-[#27c284] border border-gray-700"
                       >
                         {day}
-                      </div>
+                      </th>
                     )
                   )}
-                </div>
+                </tr>
+              </thead>
+              <tbody>
                 {calendarData.map((week, weekIndex) => (
-                  <div key={weekIndex} className="calendar-week flex">
+                  <tr key={weekIndex}>
                     {week.map((day, dayIndex) => {
                       const isProfit = day.pnl > 0;
                       const isLoss = day.pnl < 0;
                       const isNeutral = day.pnl === 0;
+                      const isOtherMonth = !day.isCurrentMonth;
 
                       return (
-                        <div
+                        <td
                           key={dayIndex}
-                          className={`flex-1 min-w-[40px] sm:min-w-[60px] h-12 sm:h-16 border border-gray-700 relative
-                            ${
-                              isProfit
-                                ? "bg-green-900/30 hover:bg-green-900/50"
-                                : ""
-                            } 
-                            ${
-                              isLoss ? "bg-red-900/30 hover:bg-red-900/50" : ""
-                            }
-                            ${
-                              isNeutral
-                                ? "bg-gray-700/20 hover:bg-gray-700/40"
-                                : ""
-                            }
+                          className={`
+                            h-16 sm:h-20 border border-gray-700 p-1 align-top
+                            ${isOtherMonth ? 'text-gray-500 bg-gray-900/20' : 'text-gray-300'}
+                            ${isProfit ? "bg-green-900/30" : ""} 
+                            ${isLoss ? "bg-red-900/30" : ""}
+                            ${isNeutral && !isOtherMonth ? "bg-gray-700/20" : ""}
+                            min-w-[40px] sm:min-w-[60px]
                           `}
                         >
-                          <div className="absolute top-1 right-1 text-xs text-gray-300">
-                            {day.day}
-                          </div>
-                          {day.pnl !== 0 && (
-                            <div className="calendar-day-pnl absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                              <CalendarDayTooltip date={day.date} pnl={day.pnl} />
+                          <div className="flex flex-col h-full">
+                            <div className="text-xs self-end">
+                              {day.day}
                             </div>
-                          )}
-                        </div>
+                            {day.pnl !== null && !isOtherMonth && (
+                              <div className="text-xs mt-1 text-center truncate">
+                                <span className={`
+                                  ${isProfit ? 'text-green-400' : ''}
+                                  ${isLoss ? 'text-red-400' : ''}
+                                  ${isNeutral ? 'text-gray-400' : ''}
+                                `}>
+                                  {day.pnl !== 0 ? `₹${day.pnl.toFixed(2)}` : '-'}
+                                  
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
                       );
                     })}
-                  </div>
+                  </tr>
                 ))}
-              </div>
-            </div>
+              </tbody>
+            </table>
           </div>
         )}
       </div>

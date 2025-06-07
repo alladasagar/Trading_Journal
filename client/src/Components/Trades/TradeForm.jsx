@@ -141,6 +141,7 @@ const TradeForm = ({ isEdit = false }) => {
       });
       setForm(prev => ({ ...prev, day: weekday }));
     }
+    
 
     const entry = parseFloat(form.entry) || 0;
     const exit = parseFloat(form.exit) || 0;
@@ -150,15 +151,15 @@ const TradeForm = ({ isEdit = false }) => {
 
     const capital = parseFloat((entry * shares).toFixed(2));
     const grossPnl = parseFloat((
-      form.side === "Short" ? (exit - entry) * shares : (entry - exit) * shares
+      form.side === "Long" ? (exit - entry) * shares : (entry - exit) * shares
     ).toFixed(2));
     const netPnl = parseFloat((grossPnl - charges).toFixed(2));
     const percentPnl = parseFloat((capital ? (netPnl / capital) * 100 : 0).toFixed(2));
 
     let roi = 0;
-    if (form.side === "Short" && entry - stopLoss !== 0) {
+    if (form.side === "Long" && entry - stopLoss !== 0) {
       roi = parseFloat(((exit - entry) / (entry - stopLoss)).toFixed(2));
-    } else if (form.side === "Long" && stopLoss - entry !== 0) {
+    } else if (form.side === "Short" && stopLoss - entry !== 0) {
       roi = parseFloat(((entry - exit) / (stopLoss - entry)).toFixed(2));
     }
 
@@ -199,6 +200,7 @@ const TradeForm = ({ isEdit = false }) => {
       'name',
       'side',
       'entry',
+      'exit',
       'stop_loss',
       'shares',
       'charges',
@@ -222,7 +224,7 @@ const TradeForm = ({ isEdit = false }) => {
     }
 
     // Validate number fields
-    const numberFields = ['entry', 'exit', 'stop_loss', 'shares', 'charges', 'target'];
+    const numberFields = ['entry', 'exit', 'stop_loss', 'shares', 'target'];
     numberFields.forEach((field) => {
       if (form[field] && isNaN(form[field])) {
         newErrors[field] = `${field.replace(/_/g, ' ')} must be a valid number`;
@@ -333,6 +335,14 @@ const TradeForm = ({ isEdit = false }) => {
       setIsUploading(false);
     }
   };
+  useEffect(() => {
+  if (form.entry_date) {
+    const dayOfWeek = new Date(form.entry_date).toLocaleDateString("en-US", { 
+      weekday: "long" 
+    });
+    setForm(prev => ({ ...prev, day: dayOfWeek }));
+  }
+}, [form.entry_date]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
