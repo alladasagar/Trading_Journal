@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useState , lazy } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import ConfirmModal from "./ui/ConfirmModal";
 import { useToast } from "./context/ToastContext";
+
+const Home = lazy(() => import("../Pages/HomePage"));
+const Premarket = lazy(() => import("../Components/Premarket/Premarket"));
+const Strategies = lazy(() => import("../Components/Strategies/Strategies"));
+const TradesPage = lazy(() => import("../Components/Trades/TradesPage"));
+const EventsPage = lazy(() => import("../Components/Events/EventsPage"));
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
