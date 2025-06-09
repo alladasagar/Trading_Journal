@@ -59,7 +59,8 @@ const AddPremarket = () => {
           addToast("Premarket added successfully", "success");
         }
       }
-      navigate("/premarket");
+      navigate("/premarket", { state: { reload: true } });
+;
     } catch (error) {
       console.error("Error saving premarket:", error);
       addToast("Failed to save premarket data", "error");

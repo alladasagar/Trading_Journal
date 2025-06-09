@@ -1,25 +1,40 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import DisplayPremarket from "./DisplayPremarket";
 import Loader from "../ui/Loader";
 import { AiOutlinePlus } from "react-icons/ai";
-import { fetchPremarketPlans } from "../../Apis/Premarket";
+import { fetchPremarket } from "../../Apis/Premarket";
 
 const Premarket = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const loadPlans = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchPremarket();
+      if (Array.isArray(data)) setPlans(data);
+    } catch (e) {
+      console.error("Fetch error", e);
+      setPlans([]);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const loadPlans = async () => {
-      setLoading(true);
-      const result = await fetchPremarketPlans();
-      if (result.success) setPlans(result.data);
-      else setPlans([]);
-      setLoading(false);
-    };
     loadPlans();
   }, []);
+
+  useEffect(() => {
+    if (location.state?.reload) {
+      loadPlans();
+      window.history.replaceState({}, document.title); // Clear reload flag
+    }
+  }, [location.state]);
+
+  const handleReload = () => loadPlans();
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
@@ -43,7 +58,7 @@ const Premarket = () => {
             <Loader />
           </div>
         ) : (
-          <DisplayPremarket plans={plans} />
+          <DisplayPremarket plans={plans} onReload={handleReload} />
         )}
       </div>
     </div>
