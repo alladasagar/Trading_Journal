@@ -273,10 +273,10 @@ const ViewTrade = () => {
               </div>
               <div>
                 <h4 className="text-gray-400 mb-1">Emojis</h4>
-                {trade.emojis && trade.emojis.length > 0 ? (
+                {trade.emojis && (Array.isArray(trade.emojis) ? trade.emojis.length > 0 : trade.emojis.length > 0) ? (
                   <div className="flex flex-wrap gap-3 text-2xl">
-                    {trade.emojis.map((emoji, index) => {
-                      const emojiObj = EMOJI_OPTIONS.find(e => e.value === emoji);
+                    {(Array.isArray(trade.emojis) ? trade.emojis : [trade.emojis]).map((emoji, index) => {
+                      const emojiObj = EMOJI_OPTIONS.find((obj) => obj.value === emoji); // example function, if you have one
                       return (
                         <div key={index} className="flex flex-col items-center text-center select-none">
                           <span>{emoji}</span>

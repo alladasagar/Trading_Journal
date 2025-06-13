@@ -18,10 +18,9 @@ const updateStrategyStats = async (strategyId) => {
     strategy.max_loss = 0;
     strategy.number_of_trades = 0;
   } else {
-    const totalNetPnl = trades.reduce((sum, t) => sum + t.net_pnl, 0);
     const wins = trades.filter(t => t.net_pnl > 0).length;
 
-    strategy.net_pnl = +(totalNetPnl / trades.length).toFixed(2);
+    strategy.net_pnl = trades.reduce((sum, t) => sum + t.net_pnl, 0);
     strategy.win_rate = +((wins / trades.length) * 100).toFixed(2);
     strategy.max_win = Math.max(...trades.map(t => t.net_pnl));
     strategy.max_loss = Math.min(...trades.map(t => t.net_pnl));

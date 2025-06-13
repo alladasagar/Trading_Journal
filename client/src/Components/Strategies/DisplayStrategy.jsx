@@ -119,13 +119,13 @@ const DisplayStrategy = () => {
                       </span>
                     </td>
                     <td className="px-4 py-4 text-sm text-green-400 sm:px-6">
-                      {(strategy.net_pnl || 0).toLocaleString()} RS
+                      {(strategy.net_pnl || 0).toLocaleString()} 
                     </td>
                     <td className="px-4 py-4 text-sm text-green-400 sm:px-6">
-                      {(strategy.max_win || 0).toLocaleString()} RS
+                      {(strategy.max_win || 0).toLocaleString()} 
                     </td>
                     <td className="px-4 py-4 text-sm text-red-400 sm:px-6">
-                      {(strategy.max_loss || 0).toLocaleString()} RS
+                      {(strategy.max_loss || 0).toLocaleString()} 
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-300 sm:px-6">
                       {strategy.number_of_trades || 0}
