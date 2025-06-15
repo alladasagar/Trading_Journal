@@ -10,7 +10,7 @@ const DisplayStrategy = () => {
   const [strategies, setStrategies] = useState([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [strategyToDelete, setStrategyToDelete] = useState(null);
-  const [loading, setLoading] = useState(false); // loading state
+  const [loading, setLoading] = useState(false); 
   const { addToast } = useToast();
   const navigate = useNavigate();
 

@@ -4,6 +4,9 @@ import { fetchTradesByStrategy, deleteTrade } from "../../Apis/Trades";
 import { useToast } from "../context/ToastContext";
 import ConfirmModal from "../ui/ConfirmModal"; // adjust path as needed
 import Loader from "../ui/Loader"; // import your Loader component
+import { FaEye, FaEdit, FaTrash } from 'react-icons/fa';
+
+
 
 const TradesPage = () => {
   const { id } = useParams();
@@ -109,6 +112,7 @@ const TradesPage = () => {
                   "ROI",
                   "Emoji",
                   "Leverage",
+                  "Screenshot",
                   "Actions",
                 ].map((header) => (
                   <th
@@ -140,9 +144,8 @@ const TradesPage = () => {
                       {trade.side}
                     </td>
                     <td
-                      className={`px-4 py-4 text-sm font-medium sm:px-6 ${
-                        trade.net_pnl >= 0 ? "text-green-400" : "text-red-400"
-                      }`}
+                      className={`px-4 py-4 text-sm font-medium sm:px-6 ${trade.net_pnl >= 0 ? "text-green-400" : "text-red-400"
+                        }`}
                     >
                       ₹{trade.net_pnl}
                     </td>
@@ -174,31 +177,53 @@ const TradesPage = () => {
                           (trade.capital && trade.capital < 20000 ? "1x" : "5x")}
                       </button>
                     </td>
-
-                    <td className="px-4 py-4 text-sm text-gray-300 sm:px-6 space-x-2">
-                      <button
-                        onClick={() => navigate(`/trades/${trade._id}`)}
-                        className="text-blue-400 hover:underline"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={() =>
-                          navigate(
-                            `/strategies/${strategyId}/trades/${trade._id}/edit`
-                          )
-                        }
-                        className="text-yellow-400 hover:underline"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(trade._id)}
-                        className="text-red-400 hover:underline"
-                      >
-                        Delete
-                      </button>
+                    <td className="px-4 py-4 text-sm text-gray-300 sm:px-6 relative group">
+                      {trade.screenshot ? (
+                        <span className="text-blue-400 underline cursor-pointer">Preview
+                          <img
+                            src={trade.screenshot}
+                            alt="Screenshot"
+                            className="absolute z-10 hidden group-hover:block w-64 h-auto border border-gray-700 mt-2 left-0 rounded-lg shadow-xl"
+                          />
+                        </span>
+                      ) : (
+                        "-"
+                      )}
                     </td>
+
+
+                    <td className="px-4 py-4 text-sm sm:px-6">
+                      <div
+                        className="flex space-x-2 sm:space-x-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => navigate(`/trades/${trade._id}`)}
+                          className="text-[#27c284] hover:text-[#1fa769] transition-colors"
+                          title="View"
+                        >
+                          <FaEye size={16} />
+                        </button>
+                        <button
+                          onClick={() =>
+                            navigate(`/strategies/${strategyId}/trades/${trade._id}/edit`)
+                          }
+                          className="text-blue-400 hover:text-blue-300 transition-colors"
+                          title="Edit"
+                        >
+                          <FaEdit size={16} />
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(trade._id)}
+                          className="text-red-500 hover:text-red-400 transition-colors"
+                          title="Delete"
+                        >
+                          <FaTrash size={16} />
+                        </button>
+                      </div>
+                    </td>
+
+
                   </tr>
                 );
               })}

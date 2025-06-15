@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchEvents } from "../Apis/Events";
 import { fetchTradesByDate } from "../Apis/Trades";
-import Loader from "../Components/ui/Loader"; 
+import Loader from "../Components/ui/Loader";
 import dayjs from "dayjs";
 import { FaChartLine, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { SiZerodha, SiTradingview } from "react-icons/si";
@@ -42,10 +42,10 @@ const HomePage = () => {
   };
 
   const navigateMonth = (direction) => {
-    const newMonth = direction === 'prev' 
-      ? currentMonth.subtract(1, 'month') 
+    const newMonth = direction === 'prev'
+      ? currentMonth.subtract(1, 'month')
       : currentMonth.add(1, 'month');
-    
+
     setCurrentMonth(newMonth);
     loadCalendarTrades(newMonth);
   };
@@ -80,7 +80,7 @@ const HomePage = () => {
   const loadCalendarTrades = async (month) => {
     const startDate = month.startOf('month').format("YYYY-MM-DD");
     const endDate = month.endOf('month').format("YYYY-MM-DD");
-    
+
     try {
       const result = await fetchTradesByDate(startDate, endDate);
       if (result.success) {
@@ -117,22 +117,26 @@ const HomePage = () => {
     const endDay = endOfMonth.day();
     const daysFromPrevMonth = startDay;
     const daysFromNextMonth = 6 - endDay;
-    
+
     // Get trades specifically for this month
     const calendarTrades = await loadCalendarTrades(currentMonth);
-    
-    const pnlByDate = calendarTrades.reduce((acc, trade) => {
+
+    const tradesByDate = calendarTrades.reduce((acc, trade) => {
       const date = dayjs(trade.entry_date).format("YYYY-MM-DD");
       if (!acc[date]) {
-        acc[date] = 0;
+        acc[date] = {
+          count: 0,
+          pnl: 0
+        };
       }
-      acc[date] += trade.net_pnl;
+      acc[date].count += 1;
+      acc[date].pnl += trade.net_pnl;
       return acc;
     }, {});
-    
+
     const calendarData = [];
     let currentWeek = [];
-    
+
     // Previous month days
     for (let i = 0; i < daysFromPrevMonth; i++) {
       const date = startOfMonth.subtract(daysFromPrevMonth - i, 'day');
@@ -140,29 +144,31 @@ const HomePage = () => {
         date: date.format("YYYY-MM-DD"),
         day: date.date(),
         pnl: null,
+        tradesCount: null,
         isCurrentMonth: false
       });
     }
-    
+
     // Current month days
     for (let i = 1; i <= daysInMonth; i++) {
       const date = startOfMonth.date(i);
       const dateStr = date.format("YYYY-MM-DD");
-      const pnl = pnlByDate[dateStr] || 0;
-      
+      const tradesData = tradesByDate[dateStr] || { count: 0, pnl: 0 };
+
       currentWeek.push({
         date: dateStr,
         day: i,
-        pnl: parseFloat(pnl.toFixed(2)),
+        pnl: parseFloat(tradesData.pnl.toFixed(2)),
+        tradesCount: tradesData.count,
         isCurrentMonth: true
       });
-      
+
       if (currentWeek.length === 7 || i === daysInMonth) {
         calendarData.push(currentWeek);
         currentWeek = [];
       }
     }
-    
+
     // Next month days
     for (let i = 1; i <= daysFromNextMonth; i++) {
       const date = endOfMonth.add(i, 'day');
@@ -170,19 +176,20 @@ const HomePage = () => {
         date: date.format("YYYY-MM-DD"),
         day: date.date(),
         pnl: null,
+        tradesCount: null,
         isCurrentMonth: false
       });
-      
+
       if (currentWeek.length === 7) {
         calendarData.push(currentWeek);
         currentWeek = [];
       }
     }
-    
+
     if (currentWeek.length > 0) {
       calendarData.push(currentWeek);
     }
-    
+
     return calendarData;
   };
 
@@ -206,9 +213,8 @@ const HomePage = () => {
         <div className="custom-tooltip bg-gray-800 border border-gray-700 p-3 rounded shadow-lg">
           <p className="tooltip-date text-[#27c284] font-medium">{label}</p>
           <p
-            className={`tooltip-value ${
-              isPositive ? "text-green-400" : "text-red-400"
-            } font-bold`}
+            className={`tooltip-value ${isPositive ? "text-green-400" : "text-red-400"
+              } font-bold`}
           >
             Net PNL: ₹{pnlValue.toFixed(2)}
           </p>
@@ -373,7 +379,7 @@ const HomePage = () => {
       {/* Calendar Component */}
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4">
-          <button 
+          <button
             onClick={() => navigateMonth('prev')}
             className="p-2 rounded-full hover:bg-gray-700 transition-colors"
           >
@@ -382,14 +388,14 @@ const HomePage = () => {
           <h3 className="text-lg sm:text-xl font-medium text-[#27c284]">
             {currentMonth.format('MMMM YYYY')}
           </h3>
-          <button 
+          <button
             onClick={() => navigateMonth('next')}
             className="p-2 rounded-full hover:bg-gray-700 transition-colors"
           >
             <FaChevronRight className="text-[#27c284]" />
           </button>
         </div>
-        
+
         {isLoading.trades ? (
           <Loader />
         ) : (
@@ -422,28 +428,32 @@ const HomePage = () => {
                         <td
                           key={dayIndex}
                           className={`
-                            h-16 sm:h-20 border border-gray-700 p-1 align-top
-                            ${isOtherMonth ? 'text-gray-500 bg-gray-900/20' : 'text-gray-300'}
-                            ${isProfit ? "bg-green-900/30" : ""} 
-                            ${isLoss ? "bg-red-900/30" : ""}
-                            ${isNeutral && !isOtherMonth ? "bg-gray-700/20" : ""}
-                            min-w-[40px] sm:min-w-[60px]
-                          `}
+    h-16 sm:h-20 border border-gray-700 p-1 align-top
+    ${isOtherMonth ? 'text-gray-500 bg-gray-900/20' : 'text-gray-300'}
+    ${isProfit ? "bg-green-900/30" : ""} 
+    ${isLoss ? "bg-red-900/30" : ""}
+    ${isNeutral && !isOtherMonth ? "bg-gray-700/20" : ""}
+    min-w-[40px] sm:min-w-[60px]
+  `}
                         >
                           <div className="flex flex-col h-full">
                             <div className="text-xs self-end">
                               {day.day}
                             </div>
                             {day.pnl !== null && !isOtherMonth && (
-                              <div className="text-xs mt-1 text-center truncate">
-                                <span className={`
-                                  ${isProfit ? 'text-green-400' : ''}
-                                  ${isLoss ? 'text-red-400' : ''}
-                                  ${isNeutral ? 'text-gray-400' : ''}
-                                `}>
+                              <div className="flex-1 flex flex-col justify-center items-center text-xs space-y-1">
+                                <div className={`
+          ${isProfit ? 'text-green-400' : ''}
+          ${isLoss ? 'text-red-400' : ''}
+          ${isNeutral ? 'text-gray-400' : ''}
+        `}>
                                   {day.pnl !== 0 ? `₹${day.pnl.toFixed(2)}` : '-'}
-                                  
-                                </span>
+                                </div>
+                                {day.tradesCount > 0 && (
+                                  <div className="text-[15px]">
+                                    {day.tradesCount} trade{day.tradesCount !== 1 ? 's' : ''}
+                                  </div>
+                                )}
                               </div>
                             )}
                           </div>
