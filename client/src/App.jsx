@@ -39,7 +39,7 @@ function App() {
             <Route path="/trades/:id" element={<ViewTrade />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/events/addEvent" element={<EventForm isEdit={false} />} />
-            <Route path="/events/:eventId/edit" element={<EventForm isEdit={true} />} />
+            <Route path="/events/:eventId" element={<EventForm isEdit={true} />} />
             <Route path="/" element={<HomePage />} />
           </Route>
         </Route>

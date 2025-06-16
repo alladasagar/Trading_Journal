@@ -12,6 +12,7 @@ const EventForm = ({ isEdit = false }) => {
   const { eventId } = useParams();
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
+  const [formLoading, setFormLoading] = useState(false); // Separate state for form submission loading
   const navigate = useNavigate();
   const { addToast } = useToast();
 
@@ -67,7 +68,7 @@ const EventForm = ({ isEdit = false }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setLoading(true);
+    setFormLoading(true); // Set form submission loading state
     try {
       let res;
       if (isEdit) {
@@ -85,22 +86,16 @@ const EventForm = ({ isEdit = false }) => {
     } catch (error) {
       addToast("Error submitting form", "error");
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
-
-  if (loading) return (
-    <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#27c284]"></div>
-    </div>
-  );
 
   return (
     <div className="max-w-md mx-auto p-6 bg-gray-800 text-white rounded-lg shadow-lg">
       <div className="flex items-center justify-between mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-gray-300 hover:text-white transition-colors"
+          className="flex items-center text-gray-300 hover:text-white transition-colors cursor-pointer"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -124,6 +119,7 @@ const EventForm = ({ isEdit = false }) => {
             className="w-full px-4 py-2 rounded-md bg-gray-700 border border-gray-600 focus:border-[#27c284] focus:ring-1 focus:ring-[#27c284] outline-none transition"
             placeholder="Enter event name"
             required
+            disabled={loading} // Disable during initial load
           />
         </div>
 
@@ -136,16 +132,17 @@ const EventForm = ({ isEdit = false }) => {
             onChange={handleChange}
             className="w-full px-4 py-2 rounded-md bg-gray-700 border border-gray-600 focus:border-[#27c284] focus:ring-1 focus:ring-[#27c284] outline-none transition"
             required
+            disabled={loading} // Disable during initial load
           />
         </div>
 
         <div className="pt-4">
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-[#27c284] hover:bg-[#1fa769] text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center"
+            disabled={loading || formLoading} // Disable during both initial load and form submission
+            className="w-full bg-[#27c284] hover:bg-[#1fa769] text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
           >
-            {loading ? (
+            {formLoading ? (
               <>
                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>

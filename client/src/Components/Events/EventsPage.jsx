@@ -1,37 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchEvents, deleteEvent } from "../../Apis/Events";
 import { useToast } from "../context/ToastContext";
-import ConfirmModal from "../ui/ConfirmModal"; //  Import the ConfirmModal component
+import Loader from "../ui/Loader";
+import ConfirmModal from "../ui/ConfirmModal";
+import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
+  const [needsRefresh, setNeedsRefresh] = useState(true); // New state to control refreshes
   const navigate = useNavigate();
   const { addToast } = useToast();
 
-  // Fetch events on mount
-  useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        setLoading(true);
-        const res = await fetchEvents();
-        if (res.success) {
-          setEvents(res.events || []);
-        } else {
-          addToast(res.message || "Failed to fetch events", "error");
-        }
-      } catch (error) {
-        addToast("Error fetching events", "error");
-      } finally {
-        setLoading(false);
+  // Memoized fetch function
+  const loadEvents = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetchEvents();
+      if (res.success) {
+        setEvents(res.events || []);
+      } else {
+        addToast(res.message || "Failed to fetch events", "error");
       }
-    };
-
-    loadEvents();
+    } catch (error) {
+      addToast("Error fetching events", "error");
+    } finally {
+      setLoading(false);
+      setNeedsRefresh(false); // Reset refresh flag after loading
+    }
   }, [addToast]);
+
+  // Fetch events only when needed
+  useEffect(() => {
+    if (needsRefresh) {
+      loadEvents();
+    }
+  }, [needsRefresh, loadEvents]);
 
   // Handle delete confirmation
   const handleDeleteClick = (id) => {
@@ -39,12 +46,13 @@ const EventsPage = () => {
     setShowDeleteModal(true);
   };
 
-  // Handle confirmed delete
-  const handleConfirmDelete = async () => {
+  // Handle confirmed delete - now updates local state directly
+  const handleConfirmDelete = useCallback(async () => {
     try {
       const res = await deleteEvent(eventToDelete);
       if (res.success) {
-        setEvents(events.filter((event) => event._id !== eventToDelete));
+        // Update local state directly instead of refetching
+        setEvents(prevEvents => prevEvents.filter(event => event._id !== eventToDelete));
         addToast("Event deleted successfully", "success");
       } else {
         addToast(res.message || "Failed to delete event", "error");
@@ -55,10 +63,10 @@ const EventsPage = () => {
       setShowDeleteModal(false);
       setEventToDelete(null);
     }
-  };
+  }, [eventToDelete, addToast]);
 
   // Render loading
-  if (loading) return <div className="text-center py-8">Loading events...</div>;
+  if (loading && needsRefresh) return <div className="text-center py-8"><Loader /></div>;
 
   return (
     <div className="p-4 max-w-6xl mx-auto">
@@ -66,15 +74,15 @@ const EventsPage = () => {
         <h2 className="text-2xl font-bold text-white">Events</h2>
         <button
           onClick={() => navigate("/events/addEvent")}
-          className="bg-[#27c284] text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+          className="bg-[#27c284] text-white px-4 py-2 rounded hover:bg-green-600 transition-colors flex items-center gap-2 cursor-pointer"
         >
-          Add Event
+          <FaPlus size={16} /> Add Event
         </button>
       </div>
 
       {events.length === 0 ? (
         <div className="text-center text-gray-400 py-8">
-          No events found. Click "Add Event" to create one.
+          {loading ? "Loading events..." : "No events found. Click 'Add Event' to create one."}
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -98,18 +106,20 @@ const EventsPage = () => {
                     })}
                   </td>
                   <td className="py-3 px-4">
-                    <div className="flex justify-end space-x-2">
+                    <div className="flex justify-end space-x-3">
                       <button
-                        onClick={() => navigate(`/events/${event._id}/edit`)}
-                        className="bg-blue-600 px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                        onClick={() => navigate(`/events/${event._id}`)}
+                        className="text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                        title="View"
                       >
-                        Edit
+                        <FaEdit size={16} />
                       </button>
                       <button
                         onClick={() => handleDeleteClick(event._id)}
-                        className="bg-red-600 px-3 py-1 rounded hover:bg-red-700 transition-colors"
+                        className="text-red-500 hover:text-red-400 transition-colors cursor-pointer"
+                        title="Delete"
                       >
-                        Delete
+                        <FaTrash size={16} />
                       </button>
                     </div>
                   </td>
@@ -120,7 +130,6 @@ const EventsPage = () => {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
