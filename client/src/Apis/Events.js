@@ -5,6 +5,7 @@ const BASE_URL = "https://trading-journal-zv1a.onrender.com";
 
 export const fetchEvents = async () => {
     try {
+      console.log("EventsRequest received to Api and sent to backend");
         const response = await axios.get(`${BASE_URL}/events`);
         return response.data;
     } catch (error) {

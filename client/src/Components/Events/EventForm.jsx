@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { addEvent, updateEvent, fetchEventById } from "../../Apis/Events";
 import { useToast } from "../context/ToastContext";
 
@@ -12,8 +12,9 @@ const EventForm = ({ isEdit = false }) => {
   const { eventId } = useParams();
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(false);
-  const [formLoading, setFormLoading] = useState(false); // Separate state for form submission loading
+  const [formLoading, setFormLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToast } = useToast();
 
   // Load event data if editing
@@ -68,7 +69,7 @@ const EventForm = ({ isEdit = false }) => {
     e.preventDefault();
     if (!validateForm()) return;
 
-    setFormLoading(true); // Set form submission loading state
+    setFormLoading(true);
     try {
       let res;
       if (isEdit) {
@@ -79,7 +80,8 @@ const EventForm = ({ isEdit = false }) => {
 
       if (res.success) {
         addToast(`Event ${isEdit ? "updated" : "added"} successfully`, "success");
-        navigate("/events");
+        // Navigate with state to indicate data was modified
+        navigate("/events", { state: { dataModified: true } });
       } else {
         addToast(res.message || "Operation failed", "error");
       }
@@ -105,7 +107,7 @@ const EventForm = ({ isEdit = false }) => {
         <h2 className="text-2xl font-bold text-[#27c284]">
           {isEdit ? "Edit Event" : "Create Event"}
         </h2>
-        <div className="w-10"></div> {/* Spacer for alignment */}
+        <div className="w-10"></div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -119,7 +121,7 @@ const EventForm = ({ isEdit = false }) => {
             className="w-full px-4 py-2 rounded-md bg-gray-700 border border-gray-600 focus:border-[#27c284] focus:ring-1 focus:ring-[#27c284] outline-none transition"
             placeholder="Enter event name"
             required
-            disabled={loading} // Disable during initial load
+            disabled={loading}
           />
         </div>
 
@@ -132,14 +134,14 @@ const EventForm = ({ isEdit = false }) => {
             onChange={handleChange}
             className="w-full px-4 py-2 rounded-md bg-gray-700 border border-gray-600 focus:border-[#27c284] focus:ring-1 focus:ring-[#27c284] outline-none transition"
             required
-            disabled={loading} // Disable during initial load
+            disabled={loading}
           />
         </div>
 
         <div className="pt-4">
           <button
             type="submit"
-            disabled={loading || formLoading} // Disable during both initial load and form submission
+            disabled={loading || formLoading}
             className="w-full bg-[#27c284] hover:bg-[#1fa769] text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
           >
             {formLoading ? (

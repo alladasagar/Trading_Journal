@@ -1,46 +1,62 @@
-import React, { memo, useState, useMemo } from "react";
-import { deletePremarket } from "../../Apis/Premarket";
+import React, { memo, useState, useEffect } from "react";
+import { deletePremarket, fetchPremarket } from "../../Apis/Premarket";
 import { useToast } from "../context/ToastContext";
 import { useNavigate } from "react-router-dom";
 import { FiEdit, FiTrash2, FiX } from "react-icons/fi";
 import ConfirmModal from "../ui/ConfirmModal";
 import dayjs from "dayjs";
 
-const DisplayPremarket = ({ plans, onReload }) => {
+const DisplayPremarket = ({ onReload }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [premarketToDelete, setPremarketToDelete] = useState(null);
   const { addToast } = useToast();
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState({
-    startDate: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
-    endDate: dayjs().format("YYYY-MM-DD")
+    startDate: "",
+    endDate: ""
   });
+  const [plans, setPlans] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch all premarket plans on component mount
+  useEffect(() => {
+    const fetchAllPlans = async () => {
+      setIsLoading(true);
+      try {
+        const data = await fetchPremarket();
+        setPlans(data || []);
+      } catch (error) {
+        addToast("Failed to fetch premarket entries", "error");
+        setPlans([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllPlans();
+  }, [addToast, onReload]);
 
   // Sort plans by date (newest first)
-  const sortedPlans = useMemo(() => {
-    if (!plans) return [];
-    return [...plans].sort((a, b) => {
-      return dayjs(b.date).isBefore(dayjs(a.date)) ? -1 : 1;
-    });
-  }, [plans]);
+  const sortedPlans = [...plans].sort((a, b) => {
+    return dayjs(b.date).isBefore(dayjs(a.date)) ? -1 : 1;
+  });
 
   // Filter plans by date range
-  const filteredPlans = useMemo(() => {
-    if (!dateRange.startDate || !dateRange.endDate) return sortedPlans;
-    
-    return sortedPlans.filter(item => {
+  // Filter plans by date range
+const filteredPlans = dateRange.startDate && dateRange.endDate
+  ? sortedPlans.filter(item => {
       const itemDate = dayjs(item.date);
       return (
         itemDate.isAfter(dayjs(dateRange.startDate).subtract(1, 'day')) && 
         itemDate.isBefore(dayjs(dateRange.endDate).add(1, 'day'))
       );
-    });
-  }, [sortedPlans, dateRange]);
+    })
+  : sortedPlans;
 
-  const confirmDeletePremarket = (id) => {
-    setPremarketToDelete(id);
-    setIsConfirmOpen(true);
-  };
+const confirmDeletePremarket = (id) => {
+  setPremarketToDelete(id);
+  setIsConfirmOpen(true);
+};
 
   const handleDeleteConfirmed = async () => {
     try {
@@ -50,7 +66,9 @@ const DisplayPremarket = ({ plans, onReload }) => {
 
       if (res.success) {
         addToast("Premarket entry deleted successfully", "success");
-        onReload();
+        // Refetch all plans after deletion
+        const data = await fetchPremarket();
+        setPlans(data || []);
       } else {
         addToast("Failed to delete premarket entry", "error");
       }
@@ -75,10 +93,62 @@ const DisplayPremarket = ({ plans, onReload }) => {
     });
   };
 
-  if (!filteredPlans || filteredPlans.length === 0) {
+  if (isLoading) {
     return (
       <div className="flex flex-col h-screen">
-        {/* Fixed Date Range Filter */}
+        <div className="bg-gray-800 p-4 border-b border-gray-700">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-gray-300 mb-1 text-sm font-medium">
+                  Start Date:
+                </label>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={dateRange.startDate}
+                  onChange={handleDateChange}
+                  max={dateRange.endDate || dayjs().format("YYYY-MM-DD")}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="flex-1 min-w-[200px]">
+                <label className="block text-gray-300 mb-1 text-sm font-medium">
+                  End Date:
+                </label>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={dateRange.endDate}
+                  onChange={handleDateChange}
+                  min={dateRange.startDate}
+                  max={dayjs().format("YYYY-MM-DD")}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
+                  disabled={isLoading}
+                />
+              </div>
+              <button
+                onClick={clearDateFilter}
+                className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-md transition-colors h-[42px]"
+                disabled={(!dateRange.startDate && !dateRange.endDate) || isLoading}
+              >
+                <FiX className="text-lg" />
+                <span>Clear</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-300">Loading premarket notes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (filteredPlans.length === 0) {
+    return (
+      <div className="flex flex-col h-screen">
         <div className="bg-gray-800 p-4 border-b border-gray-700">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-wrap items-end gap-4">
@@ -120,8 +190,6 @@ const DisplayPremarket = ({ plans, onReload }) => {
             </div>
           </div>
         </div>
-
-        {/* Empty State */}
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-300 text-center py-8">
             {dateRange.startDate || dateRange.endDate 
@@ -135,7 +203,6 @@ const DisplayPremarket = ({ plans, onReload }) => {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Fixed Date Range Filter */}
       <div className="bg-gray-800 p-4 border-b border-gray-700">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap items-end gap-4">
@@ -178,7 +245,6 @@ const DisplayPremarket = ({ plans, onReload }) => {
         </div>
       </div>
 
-      {/* Scrollable Premarket Container */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto p-4 space-y-4">
           {filteredPlans.map((item) => (

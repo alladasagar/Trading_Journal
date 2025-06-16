@@ -44,7 +44,7 @@ const Premarket = () => {
 
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-3">
         <button
-          className="flex items-center justify-center gap-2 bg-[#27c284] text-white px-4 py-2 rounded-md hover:bg-[#1fa769] transition-all text-sm sm:text-base"
+          className="flex items-center justify-center gap-2 bg-[#27c284] text-white px-4 py-2 rounded-md hover:bg-[#1fa769] transition-all text-sm sm:text-base cursor-pointer"
           onClick={() => navigate("/addpremarket")}
         >
           <AiOutlinePlus className="text-lg" />

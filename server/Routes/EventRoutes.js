@@ -7,6 +7,7 @@ const router = express.Router();
 // Get all events
 router.get('/events', async (req, res) => {
   try {
+    console.log("EventsRequest received to backend");
     const events = await Event.find().sort({ date: 1 });
     res.json({ success: true, events });
   } catch (error) {
