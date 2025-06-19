@@ -85,6 +85,10 @@ app.use("/", EventRoutes);
 app.use('/trades', tradeRoutes);  // Optional duplicate? Consider removing
 
 // Root Route
+
+//uptime pinger automatic url hitter 
+app.get("/ping", (req, res) => res.send("pong"));
+
 app.get("/", (req, res) => {
   res.send("✅ Trading Journal Server is running...");
 });
