@@ -4,41 +4,8 @@ import { fetchEvents, deleteEvent } from "../../Apis/Events";
 import { useToast } from "../context/ToastContext";
 import Loader from "../ui/Loader";
 import ConfirmModal from "../ui/ConfirmModal";
-import { FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
-
-// Cache object with methods to manage events cache
-const createEventsCache = () => {
-  let cache = {
-    data: null,
-    timestamp: null,
-    CACHE_DURATION: 5 * 60 * 1000 // 5 minutes
-  };
-
-  return {
-    get: () => cache,
-    set: (data) => {
-      cache = {
-        ...cache,
-        data,
-        timestamp: Date.now()
-      };
-    },
-    isValid: () => {
-      return cache.data && 
-             cache.timestamp && 
-             (Date.now() - cache.timestamp) < cache.CACHE_DURATION;
-    },
-    invalidate: () => {
-      cache = {
-        ...cache,
-        data: null,
-        timestamp: null
-      };
-    }
-  };
-};
-
-const eventsCache = createEventsCache();
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+import { eventsCache } from "../../utilities/Cache/EventCache"; 
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
@@ -49,10 +16,8 @@ const EventsPage = () => {
   const location = useLocation();
   const { addToast } = useToast();
 
-  // Memoized fetch function with caching
   const loadEvents = useCallback(async (forceRefresh = false) => {
     try {
-      // Use cache if valid and not forcing refresh
       if (eventsCache.isValid() && !forceRefresh) {
         setEvents(eventsCache.get().data);
         return;
@@ -60,7 +25,7 @@ const EventsPage = () => {
 
       setLoading(true);
       const res = await fetchEvents();
-      
+
       if (res.success) {
         const eventsData = res.events || [];
         setEvents(eventsData);
@@ -76,13 +41,11 @@ const EventsPage = () => {
     }
   }, [addToast]);
 
-  // Handle initial load and cache invalidation from navigation state
   useEffect(() => {
     const loadData = async () => {
       if (location.state?.dataModified) {
         eventsCache.invalidate();
         await loadEvents(true);
-        // Clear the state to prevent infinite refreshes
         navigate(location.pathname, { replace: true, state: {} });
       } else {
         await loadEvents();
@@ -92,24 +55,21 @@ const EventsPage = () => {
     loadData();
   }, [loadEvents, location.state, location.pathname, navigate]);
 
-  // Handle confirmed delete
   const handleConfirmDelete = useCallback(async () => {
     try {
       const res = await deleteEvent(eventToDelete);
       if (res.success) {
-        // Optimistic UI update
         setEvents(prev => prev.filter(event => event._id !== eventToDelete));
         eventsCache.invalidate();
         addToast("Event deleted successfully", "success");
       } else {
         addToast(res.message || "Failed to delete event", "error");
-        // Re-fetch to ensure consistency if delete failed
         loadEvents(true);
       }
     } catch (error) {
       addToast("Error deleting event", "error");
       console.error("Error deleting event:", error);
-      loadEvents(true); // Re-fetch on error
+      loadEvents(true);
     } finally {
       setShowDeleteModal(false);
       setEventToDelete(null);
@@ -124,7 +84,6 @@ const EventsPage = () => {
     navigate("/events/addEvent", { state: { fromList: true } });
   };
 
-  // Render loading only when actually loading from server
   if (loading && !eventsCache.get().data) {
     return (
       <div className="flex justify-center items-center min-h-[200px]">
