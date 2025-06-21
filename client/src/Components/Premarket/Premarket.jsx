@@ -1,40 +1,60 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import DisplayPremarket from "./DisplayPremarket";
 import Loader from "../ui/Loader";
 import { AiOutlinePlus } from "react-icons/ai";
 import { fetchPremarket } from "../../Apis/Premarket";
+import { premarketCache } from "../../utilities/Cache/PremarketCache";
 
 const Premarket = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [plans, setPlans] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isReloading, setIsReloading] = useState(false);
 
-  const loadPlans = async () => {
+  const loadPlans = useCallback(async (forceReload = false) => {
     setLoading(true);
     try {
-      const data = await fetchPremarket();
-      if (Array.isArray(data)) setPlans(data);
-    } catch (e) {
-      console.error("Fetch error", e);
+      if (!forceReload && premarketCache.isValid()) {
+        setPlans(premarketCache.get().data);
+      } else {
+        const res = await fetchPremarket();
+        console.log("API Response:", res);
+        
+        if (res?.success) {
+          const data = Array.isArray(res.data) ? res.data : [];
+          console.log("Data to display:", data);
+          premarketCache.set(data);
+          setPlans(data);
+        } else {
+          console.error("API Error:", res?.message);
+          setPlans([]);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch premarket entries:", error);
       setPlans([]);
+    } finally {
+      setLoading(false);
+      setIsReloading(false);
     }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    loadPlans();
   }, []);
 
+  // Initial load
   useEffect(() => {
-    if (location.state?.reload) {
-      loadPlans();
-      window.history.replaceState({}, document.title); // Clear reload flag
-    }
-  }, [location.state]);
+    loadPlans();
+  }, [loadPlans]);
 
-  const handleReload = () => loadPlans();
+  // Handle reload when location state changes
+  useEffect(() => {
+    if (location.state?.reload && !isReloading) {
+      setIsReloading(true);
+      loadPlans(true);
+      // Clear the reload state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, loadPlans, navigate, location.pathname, isReloading]);
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6">
@@ -42,25 +62,23 @@ const Premarket = () => {
         Premarket Plans
       </h1>
 
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-3">
+      <div className="flex justify-between items-center mb-6">
         <button
-          className="flex items-center justify-center gap-2 bg-[#27c284] text-white px-4 py-2 rounded-md hover:bg-[#1fa769] transition-all text-sm sm:text-base cursor-pointer"
           onClick={() => navigate("/addpremarket")}
+          className="flex items-center gap-2 bg-[#27c284] hover:bg-[#1fa769] text-white px-4 py-2 rounded-md transition-colors"
         >
           <AiOutlinePlus className="text-lg" />
-          <span>Add Premarket Plan</span>
+          Add Premarket Plan
         </button>
       </div>
 
-      <div className="border-t border-gray-700 pt-4 sm:pt-6">
-        {loading ? (
-          <div className="flex justify-center items-center h-48">
-            <Loader />
-          </div>
-        ) : (
-          <DisplayPremarket plans={plans} onReload={handleReload} />
-        )}
-      </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <Loader />
+        </div>
+      ) : (
+        <DisplayPremarket plans={plans} onReload={() => loadPlans(true)} />
+      )}
     </div>
   );
 };
