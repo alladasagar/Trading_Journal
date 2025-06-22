@@ -47,7 +47,10 @@ const tradeSchema = new mongoose.Schema({
   entry_date: { type: Date, required: true },
   exit_date: { type: Date },
   duration: { type: String },
-  screenshot: { type: String },
+  screenshots: {
+    type: [String], // Array of strings (URLs)
+    default: []
+  },
   mistakes: [{ type: String }],
   emojis: { type: String },
   // Strategy rules at time of trade creation

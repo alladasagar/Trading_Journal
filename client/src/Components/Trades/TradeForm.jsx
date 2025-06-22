@@ -46,7 +46,7 @@ const TradeForm = ({ isEdit = false }) => {
     day: new Date().toLocaleDateString("en-US", { weekday: "long" }),
     time: "",
     duration: "",
-    screenshot: "",
+    screenshots: [],
     mistakes: [""],
     emojis: "",
     strategyId: strategyId,
@@ -92,7 +92,7 @@ const TradeForm = ({ isEdit = false }) => {
             day: trade.day || (entryDate ? new Date(entryDate).toLocaleDateString("en-US", { weekday: "long" }) : ""),
             time: trade.time || "",
             duration: trade.duration || "",
-            screenshot: trade.screenshot || "",
+            screenshots: Array.isArray(form.screenshots) ? form.screenshots : [],
             mistakes: Array.isArray(trade.mistakes) && trade.mistakes.length > 0 ? trade.mistakes : [""],
             emojis: trade.emojis || "",
             entry_rules: Array.isArray(trade.entry_rules) ? trade.entry_rules : [],
@@ -141,7 +141,7 @@ const TradeForm = ({ isEdit = false }) => {
       });
       setForm(prev => ({ ...prev, day: weekday }));
     }
-    
+
 
     const entry = parseFloat(form.entry) || 0;
     const exit = parseFloat(form.exit) || 0;
@@ -289,60 +289,76 @@ const TradeForm = ({ isEdit = false }) => {
     setForm(prev => ({ ...prev, [field]: updated }));
   };
 
+  // 2. Update the image upload handler
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
     const validTypes = ["image/jpeg", "image/png", "image/gif"];
-    if (!validTypes.includes(file.type)) {
-      addToast("Please upload a valid image (JPEG, PNG, GIF)", "error");
+    const invalidFiles = files.filter(file => !validTypes.includes(file.type));
+
+    if (invalidFiles.length > 0) {
+      addToast("Please upload only valid images (JPEG, PNG, GIF)", "error");
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      addToast("Image size should be less than 5MB", "error");
+    const oversizedFiles = files.filter(file => file.size > 5 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      addToast("Some images exceed 5MB limit", "error");
       return;
     }
 
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "Trading_Journal");
+      // Upload all files in parallel
+      const uploadPromises = files.map(file => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "Trading_Journal");
 
-      const response = await fetch(
-        "https://api.cloudinary.com/v1_1/dmtzqbef2/image/upload",
-        {
+        return fetch("https://api.cloudinary.com/v1_1/dmtzqbef2/image/upload", {
           method: "POST",
           body: formData,
-        }
-      );
+        }).then(response => response.json());
+      });
 
-      const data = await response.json();
+      const results = await Promise.all(uploadPromises);
+      const successfulUploads = results.filter(result => result.secure_url);
 
-      if (data.secure_url) {
-        setForm(prev => ({ ...prev, screenshot: data.secure_url }));
-        setPreviewImage(data.secure_url);
-        addToast("Screenshot uploaded successfully", "success");
+      if (successfulUploads.length > 0) {
+        const newUrls = successfulUploads.map(result => result.secure_url);
+        setForm(prev => ({
+          ...prev,
+          screenshots: [...prev.screenshots, ...newUrls]
+        }));
+        addToast(`Uploaded ${successfulUploads.length} image(s) successfully`, "success");
       } else {
-        addToast("Failed to upload screenshot", "error");
+        addToast("Failed to upload images", "error");
       }
     } catch (error) {
       console.error("Upload error:", error);
-      addToast("Error uploading screenshot", "error");
+      addToast("Error uploading images", "error");
     } finally {
       setIsUploading(false);
     }
   };
+
+  // 3. Add a function to remove an image
+  const removeImage = (index) => {
+    setForm(prev => ({
+      ...prev,
+      screenshots: prev.screenshots.filter((_, i) => i !== index)
+    }));
+  };
   useEffect(() => {
-  if (form.entry_date) {
-    const dayOfWeek = new Date(form.entry_date).toLocaleDateString("en-US", { 
-      weekday: "long" 
-    });
-    setForm(prev => ({ ...prev, day: dayOfWeek }));
-  }
-}, [form.entry_date]);
+    if (form.entry_date) {
+      const dayOfWeek = new Date(form.entry_date).toLocaleDateString("en-US", {
+        weekday: "long"
+      });
+      setForm(prev => ({ ...prev, day: dayOfWeek }));
+    }
+  }, [form.entry_date]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -365,6 +381,7 @@ const TradeForm = ({ isEdit = false }) => {
         target: form.target ? parseFloat(form.target) : null,
         mistakes: form.mistakes.filter((m) => m !== ""),
         emojis: form.emojis,
+        screenshots: form.screenshots,
         entry_rules: form.entry_rules,
         exit_rules: form.exit_rules,
         entry_date: new Date(form.entry_date).toISOString(),
@@ -656,17 +673,19 @@ const TradeForm = ({ isEdit = false }) => {
 
         {/* Screenshot Upload */}
         <div className="col-span-2">
-          <label className="block text-sm font-medium mb-1">Screenshot</label>
-          <div className="flex items-center gap-4">
-            <label className="flex-1">
+          <label className="block text-sm font-medium mb-1">Screenshots</label>
+          <div className="flex flex-col gap-4">
+            <label>
               <div className="bg-gray-800 border border-gray-700 rounded p-4 text-center cursor-pointer hover:bg-gray-700 transition">
                 {isUploading ? (
                   "Uploading..."
                 ) : (
                   <>
-                    <span className="text-emerald-400">Choose File</span>
+                    <span className="text-emerald-400">Choose Files</span>
                     <span className="text-gray-400 text-sm block mt-1">
-                      {previewImage ? "Change image" : "JPEG, PNG (max 5MB)"}
+                      {form.screenshots.length > 0
+                        ? "Add more images"
+                        : "JPEG, PNG (max 5MB each, multiple allowed)"}
                     </span>
                   </>
                 )}
@@ -676,20 +695,36 @@ const TradeForm = ({ isEdit = false }) => {
                   onChange={handleImageUpload}
                   className="hidden"
                   disabled={isUploading}
+                  multiple
                 />
               </div>
             </label>
-            {previewImage && (
-              <div className="flex-1">
-                <img
-                  src={previewImage}
-                  alt="Preview"
-                  className="w-full h-32 object-contain border border-gray-700 rounded"
-                />
+
+            {form.screenshots.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {form.screenshots.map((url, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={url}
+                      alt={`Screenshot ${index + 1}`}
+                      className="w-full h-32 object-contain border border-gray-700 rounded"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove image"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
+
+        
 
         {/* Mistakes */}
         <div className="col-span-2">

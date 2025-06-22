@@ -450,7 +450,7 @@ const HomePage = () => {
                                   {day.pnl !== 0 ? `₹${day.pnl.toFixed(2)}` : '-'}
                                 </div>
                                 {day.tradesCount > 0 && (
-                                  <div className="text-[15px]">
+                                  <div className="text-[15px] text-center">
                                     {day.tradesCount} trade{day.tradesCount !== 1 ? 's' : ''}
                                   </div>
                                 )}

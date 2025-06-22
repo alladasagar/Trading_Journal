@@ -8,6 +8,8 @@ const BASE_URL = "https://trading-journal-zv1a.onrender.com";
 // Add a trade for a given strategy ID
 export const addTrade = async (strategyId, data) => {
   try {
+    console.log(data);
+    console.log("Screeenshots:",data.screenshots)
     const res = await axios.post(`${BASE_URL}/strategy/${strategyId}/trades`, data);
     return res.data;
   } catch (error) {

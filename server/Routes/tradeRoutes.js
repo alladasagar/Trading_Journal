@@ -34,17 +34,32 @@ const updateStrategyStats = async (strategyId) => {
 // ✅ Add Trade
 router.post("/strategy/:strategyId/trades", async (req, res) => {
   const { strategyId } = req.params;
-  const tradeData = req.body;
+  let tradeData = req.body;
 
   try {
+    // Validate strategy exists
     const strategy = await Strategy.findById(strategyId);
     if (!strategy) {
       return res.status(404).json({ success: false, message: "Strategy not found" });
     }
 
+    // Ensure required fields
     if (!tradeData.day || tradeData.day.trim() === "") {
       return res.status(400).json({ success: false, message: "Field 'day' is required" });
     }
+
+    // Normalize screenshots array
+    tradeData = {
+      ...tradeData,
+      screenshots: Array.isArray(tradeData.screenshots) ? tradeData.screenshots : [],
+      entry_rules: Array.isArray(tradeData.entry_rules) ? tradeData.entry_rules : [],
+      exit_rules: Array.isArray(tradeData.exit_rules) ? tradeData.exit_rules : []
+    };
+
+    console.log("Processing trade with screenshots:", {
+      screenshotCount: tradeData.screenshots.length,
+      firstScreenshot: tradeData.screenshots[0] || 'none'
+    });
 
     const newTrade = new Trade({
       ...tradeData,
@@ -53,19 +68,40 @@ router.post("/strategy/:strategyId/trades", async (req, res) => {
       exit_date: tradeData.exit_date ? new Date(tradeData.exit_date) : null
     });
 
-    await newTrade.save();
+    const savedTrade = await newTrade.save();
+    console.log("Saved trade screenshots:", savedTrade.screenshots);
 
-    // Update strategy
+    // Update strategy stats
     await updateStrategyStats(strategyId);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Trade added successfully",
-      data: newTrade
+      data: savedTrade
     });
+
   } catch (error) {
-    console.error("Error adding trade:", error);
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Error adding trade:", {
+      message: error.message,
+      stack: error.stack,
+      fullError: error
+    });
+    
+    // Handle validation errors specifically
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: messages
+      });
+    }
+
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
