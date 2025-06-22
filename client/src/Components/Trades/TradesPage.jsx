@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchTradesByStrategy, deleteTrade } from "../../Apis/Trades";
+import { graphCache } from "../../utilities/Cache/GraphCache";
+import { calendarCache } from "../../utilities/Cache/CalendarCache";
 import { useToast } from "../context/ToastContext";
 import ConfirmModal from "../ui/ConfirmModal"; // adjust path as needed
 import Loader from "../ui/Loader"; // import your Loader component
@@ -41,6 +43,8 @@ const TradesPage = () => {
     const res = await deleteTrade(trade_id);
 
     if (res.success) {
+      graphCache.invalidate();  
+      calendarCache.invalidate();
       addToast(res.message || "Trade deleted successfully", "success");
       setTrades((prev) => prev.filter((trade) => trade._id !== trade_id));
     } else {

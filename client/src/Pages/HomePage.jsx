@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { fetchEvents } from "../Apis/Events";
 import { fetchTradesByDate } from "../Apis/Trades";
 import { eventsCache } from "../utilities/Cache/EventCache";
+import { graphCache } from "../utilities/Cache/GraphCache";
+import { calendarCache } from "../utilities/Cache/CalendarCache";
 import Loader from "../Components/ui/Loader";
 import dayjs from "dayjs";
 import { FaChartLine, FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -34,6 +36,33 @@ const HomePage = () => {
     endDate: dayjs().format("YYYY-MM-DD")
   });
 
+   const handleClearDates = () => {
+    setDateRange({
+      startDate: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
+      endDate: dayjs().format("YYYY-MM-DD")
+    });
+  };
+
+  // Custom Tooltip Component (moved to top)
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const pnlValue = payload[0].value;
+      const isPositive = pnlValue >= 0;
+
+      return (
+        <div className="custom-tooltip bg-gray-800 border border-gray-700 p-3 rounded shadow-lg">
+          <p className="tooltip-date text-[#27c284] font-medium">{label}</p>
+          <p
+            className={`tooltip-value ${isPositive ? "text-green-400" : "text-red-400"
+              } font-bold`}
+          >
+            Net PNL: ₹{pnlValue.toFixed(2)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   const handleDateChange = (e) => {
     const { name, value } = e.target;
@@ -49,13 +78,28 @@ const HomePage = () => {
       : currentMonth.add(1, 'month');
 
     setCurrentMonth(newMonth);
-    loadCalendarTrades(newMonth);
   };
 
-  // Add this useEffect for loading events
+  // Process PNL data
+  const processPnlData = (trades) => {
+    const pnlByDate = trades.reduce((acc, trade) => {
+      const date = dayjs(trade.entry_date).format("MMM D");
+      if (!acc[date]) {
+        acc[date] = 0;
+      }
+      acc[date] += trade.net_pnl;
+      return acc;
+    }, {});
+
+    return Object.entries(pnlByDate).map(([date, pnl]) => ({
+      date,
+      pnl: parseFloat(pnl.toFixed(2))
+    }));
+  };
+
+  // Load events with cache
   useEffect(() => {
     const loadEvents = async () => {
-      // Check cache first
       if (eventsCache.isValid()) {
         const cachedEvents = eventsCache.get().data;
         filterTodaysEvents(cachedEvents);
@@ -66,11 +110,8 @@ const HomePage = () => {
       try {
         const result = await fetchEvents();
         if (result.success) {
-          // Update cache
           eventsCache.set(result.events);
           filterTodaysEvents(result.events);
-        } else {
-          console.log(result.message);
         }
       } catch (error) {
         console.log("Error loading events:", error);
@@ -90,9 +131,18 @@ const HomePage = () => {
     loadEvents();
   }, []);
 
-  // Load trades for date range (independent of calendar)
+  // Load trades with GraphCache
   useEffect(() => {
     const loadTrades = async () => {
+      const cacheKey = `${dateRange.startDate}-${dateRange.endDate}`;
+      
+      if (graphCache.isValid() && graphCache.get().data?.range === cacheKey) {
+        const cachedData = graphCache.get().data;
+        setTrades(cachedData.trades);
+        setPnlData(cachedData.pnlData);
+        return;
+      }
+
       setIsLoading((prev) => ({ ...prev, trades: true }));
       try {
         const result = await fetchTradesByDate(
@@ -100,14 +150,17 @@ const HomePage = () => {
           dateRange.endDate
         );
         if (result.success) {
-          setTrades(result.trades);
           const processedData = processPnlData(result.trades);
+          setTrades(result.trades);
           setPnlData(processedData);
-        } else {
-          console.log(result.message);
+          graphCache.set({
+            trades: result.trades,
+            pnlData: processedData,
+            range: cacheKey
+          });
         }
       } catch (error) {
-        console.log("Something went Wrong", error);
+        console.log("Error loading trades:", error);
       } finally {
         setIsLoading((prev) => ({ ...prev, trades: false }));
       }
@@ -116,7 +169,7 @@ const HomePage = () => {
     loadTrades();
   }, [dateRange]);
 
-  // Load trades specifically for calendar view
+  // Load calendar trades
   const loadCalendarTrades = async (month) => {
     const startDate = month.startOf('month').format("YYYY-MM-DD");
     const endDate = month.endOf('month').format("YYYY-MM-DD");
@@ -124,7 +177,6 @@ const HomePage = () => {
     try {
       const result = await fetchTradesByDate(startDate, endDate);
       if (result.success) {
-        // We don't update the main trades state here, just use for calendar
         return result.trades;
       }
     } catch (error) {
@@ -133,23 +185,14 @@ const HomePage = () => {
     }
   };
 
-  const processPnlData = (trades) => {
-    const pnlByDate = trades.reduce((acc, trade) => {
-      const date = dayjs(trade.entry_date).format("MMM D");
-      if (!acc[date]) {
-        acc[date] = 0;
-      }
-      acc[date] += trade.net_pnl;
-      return acc;
-    }, {});
-
-    return Object.entries(pnlByDate).map(([date, pnl]) => ({
-      date,
-      pnl: parseFloat(pnl.toFixed(2))
-    }));
-  };
-
+  // Generate calendar data with CalendarCache
   const generateCalendarData = async () => {
+    const monthKey = currentMonth.format('YYYY-MM');
+    
+    if (calendarCache.isValid() && calendarCache.get().data?.month === monthKey) {
+      return calendarCache.get().data.calendarData;
+    }
+
     const startOfMonth = currentMonth.startOf('month');
     const endOfMonth = currentMonth.endOf('month');
     const daysInMonth = endOfMonth.date();
@@ -158,7 +201,6 @@ const HomePage = () => {
     const daysFromPrevMonth = startDay;
     const daysFromNextMonth = 6 - endDay;
 
-    // Get trades specifically for this month
     const calendarTrades = await loadCalendarTrades(currentMonth);
 
     const tradesByDate = calendarTrades.reduce((acc, trade) => {
@@ -230,12 +272,18 @@ const HomePage = () => {
       calendarData.push(currentWeek);
     }
 
+    // Cache the calendar data
+    calendarCache.set({
+      calendarData,
+      month: monthKey
+    });
+
     return calendarData;
   };
 
   const [calendarData, setCalendarData] = useState([]);
 
-  // Load calendar data when month changes
+  // Load calendar data with cache
   useEffect(() => {
     const loadData = async () => {
       const data = await generateCalendarData();
@@ -243,26 +291,6 @@ const HomePage = () => {
     };
     loadData();
   }, [currentMonth]);
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const pnlValue = payload[0].value;
-      const isPositive = pnlValue >= 0;
-
-      return (
-        <div className="custom-tooltip bg-gray-800 border border-gray-700 p-3 rounded shadow-lg">
-          <p className="tooltip-date text-[#27c284] font-medium">{label}</p>
-          <p
-            className={`tooltip-value ${isPositive ? "text-green-400" : "text-red-400"
-              } font-bold`}
-          >
-            Net PNL: ₹{pnlValue.toFixed(2)}
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6">
@@ -319,7 +347,6 @@ const HomePage = () => {
       </div>
 
       {/* Events Marquee */}
-      // Update your marquee component to use the cached events
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6">
         <div className="p-4">
           {isLoading.events ? (
@@ -346,10 +373,55 @@ const HomePage = () => {
           )}
         </div>
       </div>
+
+      {/* Date Range Filter */}
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg sm:text-xl font-medium text-[#27c284]">
+            Date Range Filter
+          </h3>
+          <button
+            onClick={handleClearDates}
+            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-[#27c284] rounded-md text-sm transition-colors"
+          >
+            Clear Dates
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-gray-300 mb-1 text-sm font-medium">
+              Start Date:
+            </label>
+            <input
+              type="date"
+              name="startDate"
+              value={dateRange.startDate}
+              onChange={handleDateChange}
+              max={dateRange.endDate}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
+            />
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-gray-300 mb-1 text-sm font-medium">
+              End Date:
+            </label>
+            <input
+              type="date"
+              name="endDate"
+              value={dateRange.endDate}
+              onChange={handleDateChange}
+              min={dateRange.startDate}
+              max={dayjs().format("YYYY-MM-DD")}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* PNL Line Chart */}
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4 sm:p-6">
         <h3 className="text-lg sm:text-xl font-medium text-[#27c284] mb-4">
-          Daily Net PNL
+          Daily Net PNL ({dayjs(dateRange.startDate).format('MMM D')} - {dayjs(dateRange.endDate).format('MMM D, YYYY')})
         </h3>
         {isLoading.trades ? (
           <Loader />
@@ -378,7 +450,7 @@ const HomePage = () => {
           </div>
         ) : (
           <div className="text-center text-gray-400 py-8">
-            No PNL data available
+            No PNL data available for selected date range
           </div>
         )}
       </div>
@@ -435,13 +507,13 @@ const HomePage = () => {
                         <td
                           key={dayIndex}
                           className={`
-    h-16 sm:h-20 border border-gray-700 p-1 align-top
-    ${isOtherMonth ? 'text-gray-500 bg-gray-900/20' : 'text-gray-300'}
-    ${isProfit ? "bg-green-900/30" : ""} 
-    ${isLoss ? "bg-red-900/30" : ""}
-    ${isNeutral && !isOtherMonth ? "bg-gray-700/20" : ""}
-    min-w-[40px] sm:min-w-[60px]
-  `}
+                            h-16 sm:h-20 border border-gray-700 p-1 align-top
+                            ${isOtherMonth ? 'text-gray-500 bg-gray-900/20' : 'text-gray-300'}
+                            ${isProfit ? "bg-green-900/30" : ""} 
+                            ${isLoss ? "bg-red-900/30" : ""}
+                            ${isNeutral && !isOtherMonth ? "bg-gray-700/20" : ""}
+                            min-w-[40px] sm:min-w-[60px]
+                          `}
                         >
                           <div className="flex flex-col h-full">
                             <div className="text-xs self-end">
@@ -450,10 +522,10 @@ const HomePage = () => {
                             {day.pnl !== null && !isOtherMonth && (
                               <div className="flex-1 flex flex-col justify-center items-center text-xs space-y-1">
                                 <div className={`
-          ${isProfit ? 'text-green-400' : ''}
-          ${isLoss ? 'text-red-400' : ''}
-          ${isNeutral ? 'text-gray-400' : ''}
-        `}>
+                                  ${isProfit ? 'text-green-400' : ''}
+                                  ${isLoss ? 'text-red-400' : ''}
+                                  ${isNeutral ? 'text-gray-400' : ''}
+                                `}>
                                   {day.pnl !== 0 ? `₹${day.pnl.toFixed(2)}` : '-'}
                                 </div>
                                 {day.tradesCount > 0 && (

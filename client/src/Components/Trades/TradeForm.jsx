@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { addTrade, fetchTradeById, updateTrade } from "../../Apis/Trades";
 import { getStrategyById as fetchStrategyById } from "../../Apis/Strategies";
+import { graphCache } from "../../utilities/Cache/GraphCache";
+import { calendarCache } from "../../utilities/Cache/CalendarCache";
 import { useToast } from "../context/ToastContext";
 import Loader from "../ui/Loader";
 
@@ -396,6 +398,8 @@ const TradeForm = ({ isEdit = false }) => {
       }
 
       if (result.success) {
+        graphCache.invalidate();  
+        calendarCache.invalidate();
         addToast(`Trade ${isEdit ? "updated" : "added"} successfully`, "success");
         navigate(`/strategies/${strategyId}/trades`);
       } else {
