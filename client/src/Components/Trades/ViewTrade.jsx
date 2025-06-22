@@ -11,6 +11,7 @@ const ViewTrade = () => {
 
   const [trade, setTrade] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const EMOJI_OPTIONS = [
     { value: "😊", label: "Happy" },
@@ -23,7 +24,7 @@ const ViewTrade = () => {
     { value: "🎯", label: "Target" },
     { value: "🔥", label: "Fire" },
     { value: "💎", label: "Diamond" },
-  ]
+  ];
 
   useEffect(() => {
     const loadTrade = async () => {
@@ -86,8 +87,58 @@ const ViewTrade = () => {
     });
   };
 
+  // Handle screenshot display
+  const renderScreenshots = () => {
+    if (!trade.screenshots || trade.screenshots.length === 0) return null;
+    
+    return (
+      <div className="bg-gray-800 rounded-xl p-6 shadow-lg border-l-4 border-indigo-500 col-span-1 md:col-span-2">
+        <h3 className="text-xl font-semibold mb-4 text-indigo-300">Screenshots</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {trade.screenshots.map((screenshot, index) => (
+            <div 
+              key={index} 
+              className="relative group cursor-pointer"
+              onClick={() => setSelectedImage(screenshot)}
+            >
+              <img
+                src={screenshot}
+                alt={`Trade Screenshot ${index + 1}`}
+                className="rounded-lg w-full h-48 object-cover hover:opacity-90 transition-opacity"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <span className="text-white text-lg font-medium">View</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-6 bg-gray-900 min-h-screen text-white">
+      {/* Image Modal */}
+      {selectedImage && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+          <div className="relative max-w-4xl w-full">
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-10 right-0 text-white hover:text-gray-300"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <img
+              src={selectedImage}
+              alt="Enlarged Screenshot"
+              className="max-h-[90vh] w-auto mx-auto"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-blue-400">Trade Details</h2>
@@ -276,7 +327,7 @@ const ViewTrade = () => {
                 {trade.emojis && (Array.isArray(trade.emojis) ? trade.emojis.length > 0 : trade.emojis.length > 0) ? (
                   <div className="flex flex-wrap gap-3 text-2xl">
                     {(Array.isArray(trade.emojis) ? trade.emojis : [trade.emojis]).map((emoji, index) => {
-                      const emojiObj = EMOJI_OPTIONS.find((obj) => obj.value === emoji); // example function, if you have one
+                      const emojiObj = EMOJI_OPTIONS.find((obj) => obj.value === emoji);
                       return (
                         <div key={index} className="flex flex-col items-center text-center select-none">
                           <span>{emoji}</span>
@@ -292,20 +343,8 @@ const ViewTrade = () => {
             </div>
           </div>
 
-          {/* Screenshot Card */}
-          {trade.screenshot && (
-            <div className="bg-gray-800 rounded-xl p-6 shadow-lg border-l-4 border-indigo-500">
-              <h3 className="text-xl font-semibold mb-4 text-indigo-300">Screenshot</h3>
-              <div className="flex justify-center">
-                <img
-                  src={trade.screenshot}
-                  alt="Trade Screenshot"
-                  className="rounded-lg max-h-80 object-contain cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => window.open(trade.screenshot, '_blank')}
-                />
-              </div>
-            </div>
-          )}
+          {/* Screenshots Section */}
+          {renderScreenshots()}
         </div>
       </div>
     </div>

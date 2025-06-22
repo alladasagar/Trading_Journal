@@ -1,9 +1,10 @@
 import express from "express";
-const router = express.Router();
+
 import Trade from "../Models/Trade.js";
 import Strategy from "../Models/Strategy.js";
 import dayjs from "dayjs";
 
+const router = express.Router();
 // Utility to update strategy stats
 const updateStrategyStats = async (strategyId) => {
   const strategy = await Strategy.findById(strategyId).populate("trades");
@@ -37,19 +38,19 @@ router.post("/strategy/:strategyId/trades", async (req, res) => {
   let tradeData = req.body;
 
   try {
-    // Validate strategy exists
+    // ✅ Validate strategy exists
     const strategy = await Strategy.findById(strategyId);
     if (!strategy) {
       return res.status(404).json({ success: false, message: "Strategy not found" });
     }
 
-    // Ensure required fields
+    // ✅ Ensure required fields
     if (!tradeData.day || tradeData.day.trim() === "") {
       return res.status(400).json({ success: false, message: "Field 'day' is required" });
     }
 
-    // Normalize screenshots array
-    tradeData = {
+    // ✅ Normalize arrays
+    const normalizedTrade = {
       ...tradeData,
       screenshots: Array.isArray(tradeData.screenshots) ? tradeData.screenshots : [],
       entry_rules: Array.isArray(tradeData.entry_rules) ? tradeData.entry_rules : [],
@@ -57,21 +58,43 @@ router.post("/strategy/:strategyId/trades", async (req, res) => {
     };
 
     console.log("Processing trade with screenshots:", {
-      screenshotCount: tradeData.screenshots.length,
-      firstScreenshot: tradeData.screenshots[0] || 'none'
+      screenshotCount: normalizedTrade.screenshots.length,
+      firstScreenshot: normalizedTrade.screenshots[0] || 'none'
     });
 
+    // ✅ Create trade explicitly
     const newTrade = new Trade({
-      ...tradeData,
+      name: normalizedTrade.name,
       strategyId,
-      entry_date: new Date(tradeData.entry_date),
-      exit_date: tradeData.exit_date ? new Date(tradeData.exit_date) : null
+      side: normalizedTrade.side,
+      entry: normalizedTrade.entry,
+      exit: normalizedTrade.exit,
+      stop_loss: normalizedTrade.stop_loss,
+      shares: normalizedTrade.shares,
+      charges: normalizedTrade.charges,
+      target: normalizedTrade.target,
+      notes: normalizedTrade.notes,
+      day: normalizedTrade.day,
+      time: normalizedTrade.time,
+      entry_date: new Date(normalizedTrade.entry_date),
+      exit_date: normalizedTrade.exit_date ? new Date(normalizedTrade.exit_date) : null,
+      duration: normalizedTrade.duration,
+      screenshots: normalizedTrade.screenshots,
+      mistakes: normalizedTrade.mistakes || [],
+      emojis: normalizedTrade.emojis || '',
+      entry_rules: normalizedTrade.entry_rules,
+      exit_rules: normalizedTrade.exit_rules,
+      capital: normalizedTrade.capital,
+      gross_pnl: normalizedTrade.gross_pnl,
+      net_pnl: normalizedTrade.net_pnl,
+      percent_pnl: normalizedTrade.percent_pnl,
+      roi: normalizedTrade.roi
     });
 
     const savedTrade = await newTrade.save();
     console.log("Saved trade screenshots:", savedTrade.screenshots);
 
-    // Update strategy stats
+    // ✅ Update strategy stats
     await updateStrategyStats(strategyId);
 
     return res.status(201).json({
@@ -86,8 +109,7 @@ router.post("/strategy/:strategyId/trades", async (req, res) => {
       stack: error.stack,
       fullError: error
     });
-    
-    // Handle validation errors specifically
+
     if (error.name === 'ValidationError') {
       const messages = Object.values(error.errors).map(val => val.message);
       return res.status(400).json({
@@ -97,13 +119,14 @@ router.post("/strategy/:strategyId/trades", async (req, res) => {
       });
     }
 
-    return res.status(500).json({ 
-      success: false, 
+    return res.status(500).json({
+      success: false,
       message: 'Server error',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
+
 
 // ✏️ Update Trade
 router.put('/trades/:id', async (req, res) => {
@@ -113,10 +136,21 @@ router.put('/trades/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Trade not found' });
     }
 
-    // Update fields
-    Object.assign(trade, req.body);
-    await trade.save();
+    // Explicitly update fields — this ensures screenshots and arrays are updated correctly
+    const fieldsToUpdate = [
+      'name', 'side', 'entry', 'exit', 'stop_loss', 'target', 'shares',
+      'charges', 'notes', 'day', 'time', 'entry_date', 'exit_date',
+      'duration', 'screenshots', 'mistakes', 'emojis', 'entry_rules',
+      'exit_rules', 'capital', 'gross_pnl', 'net_pnl', 'percent_pnl', 'roi'
+    ];
 
+    fieldsToUpdate.forEach(field => {
+      if (req.body[field] !== undefined) {
+        trade[field] = req.body[field];
+      }
+    });
+
+    await trade.save();
     await updateStrategyStats(trade.strategyId);
 
     res.json({ success: true, trade });
@@ -125,6 +159,7 @@ router.put('/trades/:id', async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to update trade' });
   }
 });
+
 
 // ❌ Delete Trade
 router.delete('/trades/:id', async (req, res) => {

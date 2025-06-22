@@ -42,6 +42,7 @@ export const fetchTradeById = async (id) => {
 // Update trade by ID
 export const updateTrade = async (tradeId, tradeData) => {
   try {
+    console.log(tradeData);
     const res = await axios.put(`${BASE_URL}/trades/${tradeId}`, tradeData, {
       headers: {
         "Content-Type": "application/json",

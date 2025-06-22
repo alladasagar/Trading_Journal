@@ -4,11 +4,9 @@ import { fetchTradesByStrategy, deleteTrade } from "../../Apis/Trades";
 import { graphCache } from "../../utilities/Cache/GraphCache";
 import { calendarCache } from "../../utilities/Cache/CalendarCache";
 import { useToast } from "../context/ToastContext";
-import ConfirmModal from "../ui/ConfirmModal"; // adjust path as needed
-import Loader from "../ui/Loader"; // import your Loader component
+import ConfirmModal from "../ui/ConfirmModal";
+import Loader from "../ui/Loader";
 import { FaEye, FaEdit, FaTrash } from 'react-icons/fa';
-
-
 
 const TradesPage = () => {
   const { id } = useParams();
@@ -16,11 +14,8 @@ const TradesPage = () => {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const [leverageOverrides, setLeverageOverrides] = useState({});
-
   const [trades, setTrades] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // State for confirmation modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tradeToDelete, setTradeToDelete] = useState(null);
 
@@ -41,7 +36,6 @@ const TradesPage = () => {
 
   const handledelete = async (trade_id) => {
     const res = await deleteTrade(trade_id);
-
     if (res.success) {
       graphCache.invalidate();  
       calendarCache.invalidate();
@@ -54,13 +48,11 @@ const TradesPage = () => {
     setTradeToDelete(null);
   };
 
-  // Open modal and set the trade to delete
   const openDeleteModal = (trade_id) => {
     setTradeToDelete(trade_id);
     setIsModalOpen(true);
   };
 
-  // Close modal without deleting
   const closeDeleteModal = () => {
     setTradeToDelete(null);
     setIsModalOpen(false);
@@ -116,7 +108,6 @@ const TradesPage = () => {
                   "ROI",
                   "Emoji",
                   "Leverage",
-                  "Screenshot",
                   "Actions",
                 ].map((header) => (
                   <th
@@ -153,7 +144,6 @@ const TradesPage = () => {
                     >
                       ₹{trade.net_pnl}
                     </td>
-
                     <td className="px-4 py-4 text-sm text-gray-300 sm:px-6">
                       {(() => {
                         const currentLeverage =
@@ -181,21 +171,6 @@ const TradesPage = () => {
                           (trade.capital && trade.capital < 20000 ? "1x" : "5x")}
                       </button>
                     </td>
-                    <td className="px-4 py-4 text-sm text-gray-300 sm:px-6 relative group">
-                      {trade.screenshot ? (
-                        <span className="text-blue-400 underline cursor-pointer">Preview
-                          <img
-                            src={trade.screenshot}
-                            alt="Screenshot"
-                            className="absolute z-10 hidden group-hover:block w-64 h-auto border border-gray-700 mt-2 left-0 rounded-lg shadow-xl"
-                          />
-                        </span>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-
-
                     <td className="px-4 py-4 text-sm sm:px-6">
                       <div
                         className="flex space-x-2 sm:space-x-3"
@@ -226,8 +201,6 @@ const TradesPage = () => {
                         </button>
                       </div>
                     </td>
-
-
                   </tr>
                 );
               })}
@@ -236,7 +209,6 @@ const TradesPage = () => {
         </div>
       )}
 
-      {/* Confirm Modal */}
       <ConfirmModal
         isOpen={isModalOpen}
         onClose={closeDeleteModal}

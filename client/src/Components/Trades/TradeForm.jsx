@@ -94,21 +94,20 @@ const TradeForm = ({ isEdit = false }) => {
             day: trade.day || (entryDate ? new Date(entryDate).toLocaleDateString("en-US", { weekday: "long" }) : ""),
             time: trade.time || "",
             duration: trade.duration || "",
-            screenshots: Array.isArray(form.screenshots) ? form.screenshots : [],
+            screenshots: trade.screenshots || [], // Update this line
             mistakes: Array.isArray(trade.mistakes) && trade.mistakes.length > 0 ? trade.mistakes : [""],
             emojis: trade.emojis || "",
             entry_rules: Array.isArray(trade.entry_rules) ? trade.entry_rules : [],
             exit_rules: Array.isArray(trade.exit_rules) ? trade.exit_rules : []
           }));
 
-          setPreviewImage(trade.screenshot || "");
+          // Remove the previewImage state as we're using screenshots array now
         } else {
           addToast(result.message || "Failed to load trade", "error");
-          navigate(-1);
         }
       } catch (error) {
         addToast("An error occurred while loading trade", "error");
-        navigate(-1);
+        console.error("Error loading trade:", error);
       } finally {
         setLoading(false);
       }
@@ -398,7 +397,7 @@ const TradeForm = ({ isEdit = false }) => {
       }
 
       if (result.success) {
-        graphCache.invalidate();  
+        graphCache.invalidate();
         calendarCache.invalidate();
         addToast(`Trade ${isEdit ? "updated" : "added"} successfully`, "success");
         navigate(`/strategies/${strategyId}/trades`);
@@ -728,7 +727,7 @@ const TradeForm = ({ isEdit = false }) => {
           </div>
         </div>
 
-        
+
 
         {/* Mistakes */}
         <div className="col-span-2">
