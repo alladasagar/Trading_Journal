@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { fetchEvents } from "../Apis/Events";
 import { fetchTradesByDate } from "../Apis/Trades";
+import { eventsCache } from "../utilities/Cache/EventCache";
 import Loader from "../Components/ui/Loader";
 import dayjs from "dayjs";
 import { FaChartLine, FaChevronLeft, FaChevronRight } from "react-icons/fa";
@@ -33,6 +34,7 @@ const HomePage = () => {
     endDate: dayjs().format("YYYY-MM-DD")
   });
 
+
   const handleDateChange = (e) => {
     const { name, value } = e.target;
     setDateRange((prev) => ({
@@ -49,6 +51,44 @@ const HomePage = () => {
     setCurrentMonth(newMonth);
     loadCalendarTrades(newMonth);
   };
+
+  // Add this useEffect for loading events
+  useEffect(() => {
+    const loadEvents = async () => {
+      // Check cache first
+      if (eventsCache.isValid()) {
+        const cachedEvents = eventsCache.get().data;
+        filterTodaysEvents(cachedEvents);
+        return;
+      }
+
+      setIsLoading(prev => ({ ...prev, events: true }));
+      try {
+        const result = await fetchEvents();
+        if (result.success) {
+          // Update cache
+          eventsCache.set(result.events);
+          filterTodaysEvents(result.events);
+        } else {
+          console.log(result.message);
+        }
+      } catch (error) {
+        console.log("Error loading events:", error);
+      } finally {
+        setIsLoading(prev => ({ ...prev, events: false }));
+      }
+    };
+
+    const filterTodaysEvents = (allEvents) => {
+      const today = dayjs().format('YYYY-MM-DD');
+      const todaysEvents = allEvents.filter(event =>
+        dayjs(event.date).format('YYYY-MM-DD') === today
+      );
+      setEvents(todaysEvents);
+    };
+
+    loadEvents();
+  }, []);
 
   // Load trades for date range (independent of calendar)
   useEffect(() => {
@@ -279,6 +319,7 @@ const HomePage = () => {
       </div>
 
       {/* Events Marquee */}
+      // Update your marquee component to use the cached events
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6">
         <div className="p-4">
           {isLoading.events ? (
@@ -286,17 +327,17 @@ const HomePage = () => {
           ) : (
             <div>
               <h2 className="text-xl font-semibold text-[rgb(232,244,239)] mb-2 text-center">
-                Today's Events
+                Today's Events ({dayjs().format('MMMM D, YYYY')})
               </h2>
-              <marquee>
+              <marquee className="h-8 flex items-center">
                 {events.length > 0 ? (
                   events.map((e, index) => (
-                    <span key={index} className="text-[#27c284] mx-8 text-2xl">
-                      {e.name}
+                    <span key={index} className="text-[#27c284] mx-8 text-2xl flex items-center">
+                      {e.name} {e.time && `@ ${e.time}`}
                     </span>
                   ))
                 ) : (
-                  <span className="text-gray-400">
+                  <span className="text-gray-400 mx-8 text-xl">
                     No events scheduled for today
                   </span>
                 )}
@@ -305,40 +346,6 @@ const HomePage = () => {
           )}
         </div>
       </div>
-
-      {/* Date Range Filter */}
-      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-gray-300 mb-1 text-sm font-medium">
-              Start Date:
-            </label>
-            <input
-              type="date"
-              name="startDate"
-              value={dateRange.startDate}
-              onChange={handleDateChange}
-              max={dateRange.endDate}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
-            />
-          </div>
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-gray-300 mb-1 text-sm font-medium">
-              End Date:
-            </label>
-            <input
-              type="date"
-              name="endDate"
-              value={dateRange.endDate}
-              onChange={handleDateChange}
-              min={dateRange.startDate}
-              max={dayjs().format("YYYY-MM-DD")}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
-            />
-          </div>
-        </div>
-      </div>
-
       {/* PNL Line Chart */}
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4 sm:p-6">
         <h3 className="text-lg sm:text-xl font-medium text-[#27c284] mb-4">
