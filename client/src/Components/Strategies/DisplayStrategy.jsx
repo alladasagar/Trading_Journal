@@ -4,7 +4,9 @@ import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../ui/ConfirmModal";
 import Loader from "../ui/Loader"; // imported Loader
 import { fetchStrategies, deleteStrategy } from "../../Apis/Strategies";
+import { strategyCache } from "../../utilities/Cache/StrategyCache"; 
 import { FaEye, FaEdit, FaTrash, FaPlus } from "react-icons/fa";
+
 
 const DisplayStrategy = () => {
   const [strategies, setStrategies] = useState([]);
@@ -16,10 +18,21 @@ const DisplayStrategy = () => {
 
   const loadStrategies = async () => {
     setLoading(true);
+    
+    // Check cache first
+    if (strategyCache.isValid()) {
+      setStrategies(strategyCache.get().data);
+      setLoading(false);
+      return;
+    }
+
     const result = await fetchStrategies();
     setLoading(false);
+    
     if (result.success) {
       setStrategies(result.data);
+      // Update cache
+      strategyCache.set(result.data);
     } else {
       addToast(result.message || "Failed to load strategies", "error");
     }
@@ -36,8 +49,11 @@ const DisplayStrategy = () => {
     setIsConfirmOpen(false);
     setStrategyToDelete(null);
     setLoading(false);
+    
     if (result.success) {
       addToast("Strategy deleted successfully", "success");
+      // Invalidate cache after deletion
+      strategyCache.invalidate();
       setStrategies((prev) => prev.filter((s) => s._id !== strategyToDelete));
     } else {
       addToast(result.message || "Failed to delete strategy", "error");

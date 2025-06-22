@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useToast } from "../context/ToastContext";
 import { addStrategy, getStrategyById, updateStrategy } from "../../Apis/Strategies";
+import { strategyCache } from "../../utilities/Cache/StrategyCache";
 import Loader from "../ui/Loader";
 import { FaArrowLeft, FaPlus, FaTimes, FaSave } from "react-icons/fa";
 
@@ -22,6 +23,20 @@ const AddStrategy = () => {
     if (isEdit) {
       (async () => {
         setLoading(true);
+        
+        // Check cache first for this specific strategy
+        const cachedStrategies = strategyCache.get().data;
+        if (cachedStrategies) {
+          const cachedStrategy = cachedStrategies.find(s => s._id === id);
+          if (cachedStrategy) {
+            setStrategyName(cachedStrategy.name || "");
+            setEntryRules(cachedStrategy.entry_rules || []);
+            setExitRules(cachedStrategy.exit_rules || []);
+            setLoading(false);
+            return;
+          }
+        }
+
         try {
           const res = await getStrategyById(id);
           if (res.success) {
@@ -75,6 +90,8 @@ const AddStrategy = () => {
 
       if (res.status === 201 || res.success) {
         addToast(`Strategy ${isEdit ? "updated" : "saved"}`, "success");
+        // Invalidate cache after save/update
+        strategyCache.invalidate();
         setTimeout(() => navigate("/strategies"), 800);
       } else {
         addToast(res.message || "Failed to save strategy", "error");
