@@ -142,17 +142,29 @@ const ViewTrade = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-3xl font-bold text-blue-400">Trade Details</h2>
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-white transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-            Back to Trades
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate(`/strategies/${trade.strategyId?._id}/trades/${trade._id}/edit`)}
+              className="flex items-center bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg text-white transition-colors cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+              Edit Trade
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-white transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+              Back to Trades
+            </button>
+          </div>
         </div>
 
+        {/* Rest of the component remains the same */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Trade Overview Card */}
           <div className="bg-gray-800 rounded-xl p-6 shadow-lg border-l-4 border-blue-500">
