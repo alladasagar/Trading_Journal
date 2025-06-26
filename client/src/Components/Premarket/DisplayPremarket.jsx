@@ -5,7 +5,15 @@ import { useNavigate } from "react-router-dom";
 import { FiEdit, FiTrash2, FiX, FiCalendar, FiFileText } from "react-icons/fi";
 import ConfirmModal from "../ui/ConfirmModal";
 import dayjs from "dayjs";
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { premarketCache } from "../../utilities/Cache/PremarketCache";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+// Extend dayjs with plugins
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 const DisplayPremarket = (props) => {
   const { plans = [], onReload = () => {} } = props;
@@ -52,18 +60,6 @@ const DisplayPremarket = (props) => {
     }
   };
 
-  const handleDateChange = (e) => {
-    const { name, value } = e.target;
-    setDateRange((prev) => ({ 
-      ...prev, 
-      [name]: value,
-      // Auto-set end date if start date is after current end date
-      ...(name === "startDate" && value && prev.endDate && dayjs(value).isAfter(dayjs(prev.endDate))) && {
-        endDate: value
-      }
-    }));
-  };
-
   const clearDateFilter = () => {
     setDateRange({ startDate: "", endDate: "" });
   };
@@ -89,51 +85,46 @@ const DisplayPremarket = (props) => {
             <label className="block text-gray-300 mb-1 text-sm font-medium">
               Start Date:
             </label>
-            <div className="relative">
-              <input
-                type="date"
-                name="startDate"
-                value={dateRange.startDate}
-                onChange={handleDateChange}
-                max={dateRange.endDate || dayjs().format("YYYY-MM-DD")}
-                className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              />
-              {dateRange.startDate && (
-                <button 
-                  onClick={() => setDateRange(prev => ({ ...prev, startDate: "" }))}
-                  className="absolute right-8 top-2.5 text-gray-400 hover:text-gray-300"
-                >
-                  <FiX size={16} />
-                </button>
-              )}
-              <FiCalendar className="absolute right-3 top-2.5 text-gray-400" />
-            </div>
+            <DatePicker
+              selected={dateRange.startDate ? dayjs(dateRange.startDate).toDate() : null}
+              onChange={(date) => setDateRange(prev => ({ 
+                ...prev, 
+                startDate: date ? dayjs(date).format("YYYY-MM-DD") : "",
+                ...(date && prev.endDate && dayjs(date).isAfter(dayjs(prev.endDate))) && {
+                  endDate: dayjs(date).format("YYYY-MM-DD")
+                }
+              }))}
+              selectsStart
+              startDate={dateRange.startDate ? dayjs(dateRange.startDate).toDate() : null}
+              endDate={dateRange.endDate ? dayjs(dateRange.endDate).toDate() : null}
+              maxDate={new Date()}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              placeholderText="Select start date"
+              isClearable
+              clearButtonClassName="text-gray-400 hover:text-gray-300 mr-10"
+            />
           </div>
           
           <div className="flex-1 min-w-[200px]">
             <label className="block text-gray-300 mb-1 text-sm font-medium">
               End Date:
             </label>
-            <div className="relative">
-              <input
-                type="date"
-                name="endDate"
-                value={dateRange.endDate}
-                onChange={handleDateChange}
-                min={dateRange.startDate}
-                max={dayjs().format("YYYY-MM-DD")}
-                className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              />
-              {dateRange.endDate && (
-                <button 
-                  onClick={() => setDateRange(prev => ({ ...prev, endDate: "" }))}
-                  className="absolute right-8 top-2.5 text-gray-400 hover:text-gray-300"
-                >
-                  <FiX size={16} />
-                </button>
-              )}
-              <FiCalendar className="absolute right-3 top-2.5 text-gray-400" />
-            </div>
+            <DatePicker
+              selected={dateRange.endDate ? dayjs(dateRange.endDate).toDate() : null}
+              onChange={(date) => setDateRange(prev => ({ 
+                ...prev, 
+                endDate: date ? dayjs(date).format("YYYY-MM-DD") : "" 
+              }))}
+              selectsEnd
+              startDate={dateRange.startDate ? dayjs(dateRange.startDate).toDate() : null}
+              endDate={dateRange.endDate ? dayjs(dateRange.endDate).toDate() : null}
+              minDate={dateRange.startDate ? dayjs(dateRange.startDate).toDate() : null}
+              maxDate={new Date()}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              placeholderText="Select end date"
+              isClearable
+              clearButtonClassName="text-gray-400 hover:text-gray-300 mr-10"
+            />
           </div>
           
           <button

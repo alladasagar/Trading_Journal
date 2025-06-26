@@ -6,7 +6,9 @@ import { calendarCache } from "../../utilities/Cache/CalendarCache";
 import { useToast } from "../context/ToastContext";
 import ConfirmModal from "../ui/ConfirmModal";
 import Loader from "../ui/Loader";
-import { FaEye, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEye, FaEdit, FaTrash, FaStickyNote } from 'react-icons/fa';
+import { Tooltip } from 'react-tooltip';
+
 
 const TradesPage = () => {
   const { id } = useParams();
@@ -37,7 +39,7 @@ const TradesPage = () => {
   const handledelete = async (trade_id) => {
     const res = await deleteTrade(trade_id);
     if (res.success) {
-      graphCache.invalidate();  
+      graphCache.invalidate();
       calendarCache.invalidate();
       addToast(res.message || "Trade deleted successfully", "success");
       setTrades((prev) => prev.filter((trade) => trade._id !== trade_id));
@@ -80,7 +82,7 @@ const TradesPage = () => {
   return (
     <div className="p-4 bg-gray-900 min-h-screen">
       <div className="flex justify-between items-end mb-4">
-       
+
 
         <button
           onClick={() => navigate(`/strategies/${id}/add-trade`)}
@@ -88,19 +90,19 @@ const TradesPage = () => {
         >
           + Add Trade
         </button>
-         <h2 className="text-xl font-semibold text-white">Trades</h2>
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-end bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-white transition-colors cursor-pointer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-            Back to Strategies
-          </button>
-                
+        <h2 className="text-xl font-semibold text-white">Trades</h2>
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-end bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-white transition-colors cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+          </svg>
+          Back to Strategies
+        </button>
+
       </div>
-     
+
 
       {trades.length === 0 ? (
         <div className="bg-gray-800 p-6 rounded-lg text-center text-gray-400">
@@ -121,6 +123,7 @@ const TradesPage = () => {
                   "ROI",
                   "Emoji",
                   "Leverage",
+                  "Note",
                   "Actions",
                 ].map((header) => (
                   <th
@@ -183,6 +186,27 @@ const TradesPage = () => {
                         {leverageOverrides[trade._id] ||
                           (trade.capital && trade.capital < 20000 ? "1x" : "5x")}
                       </button>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-300 sm:px-6">
+                      {trade.notes && (
+                        <>
+                          <div
+                            data-tooltip-id={`note-tooltip-${trade._id}`}
+                            data-tooltip-content={trade.notes}
+                            className="inline-block"
+                          >
+                            <FaStickyNote
+                              className="text-yellow-400 hover:text-yellow-300 cursor-pointer"
+                              size={16}
+                            />
+                          </div>
+                          <Tooltip
+                            id={`note-tooltip-${trade._id}`}
+                            place="top"
+                            className="max-w-xs z-50"
+                          />
+                        </>
+                      )}
                     </td>
                     <td className="px-4 py-4 text-sm sm:px-6">
                       <div
