@@ -78,6 +78,7 @@ const TradesPage = () => {
       </div>
     );
   }
+  console.log("Trades data:", trades.map(t => ({id: t._id, notes: t.notes})));
 
   return (
     <div className="p-4 bg-gray-900 min-h-screen">
@@ -188,7 +189,8 @@ const TradesPage = () => {
                       </button>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-300 sm:px-6">
-                      {trade.notes && (
+                      {trade.notes ? (
+                        
                         <>
                           <div
                             data-tooltip-id={`note-tooltip-${trade._id}`}
@@ -206,6 +208,8 @@ const TradesPage = () => {
                             className="max-w-xs z-50"
                           />
                         </>
+                      ) : (
+                        "-"
                       )}
                     </td>
                     <td className="px-4 py-4 text-sm sm:px-6">
