@@ -18,31 +18,35 @@ const EventForm = ({ isEdit = false }) => {
   const { addToast } = useToast();
 
   // Load event data if editing
+  // Load event data if editing
   useEffect(() => {
-    if (!isEdit || !eventId) return;
-
-    const loadEvent = async () => {
-      setLoading(true);
-      try {
-        const res = await fetchEventById(eventId);
-        if (res.success) {
-          setForm({
-            name: res.event.name || "",
-            date: res.event.date ? res.event.date.split("T")[0] : ""
-          });
-        } else {
-          addToast(res.message || "Failed to load event", "error");
-          navigate(-1);
+    if (isEdit && eventId) {
+      const loadEvent = async () => {
+        setLoading(true);
+        try {
+          const res = await fetchEventById(eventId);
+          console.log('Event data:', res); // Debug log
+          
+          if (res.success && res.event) {
+            setForm({
+              name: res.event.name || "",
+              date: res.event.date ? res.event.date.split("T")[0] : ""
+            });
+          } else {
+            addToast(res.message || "Failed to load event", "error");
+            navigate('/events');
+          }
+        } catch (error) {
+          addToast("Error loading event", "error");
+          console.error("Error details:", error);
+          navigate('/events');
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        addToast("Error loading event", "error");
-        navigate(-1);
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    loadEvent();
+      loadEvent();
+    }
   }, [isEdit, eventId, addToast, navigate]);
 
   const handleChange = (e) => {
@@ -80,7 +84,6 @@ const EventForm = ({ isEdit = false }) => {
 
       if (res.success) {
         addToast(`Event ${isEdit ? "updated" : "added"} successfully`, "success");
-        // Navigate with state to indicate data was modified
         navigate("/events", { state: { dataModified: true } });
       } else {
         addToast(res.message || "Operation failed", "error");

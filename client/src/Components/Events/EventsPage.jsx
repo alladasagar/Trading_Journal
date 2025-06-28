@@ -19,27 +19,32 @@ const EventsPage = () => {
   const loadEvents = useCallback(async (forceRefresh = false) => {
     try {
       if (eventsCache.isValid() && !forceRefresh) {
-        setEvents(eventsCache.get().data);
+        const cachedData = eventsCache.get();
+        setEvents(Array.isArray(cachedData?.data) ? cachedData.data : []);
         return;
       }
 
       setLoading(true);
       const res = await fetchEvents();
+      console.log('API Response:', res); // Debug log
 
       if (res.success) {
-        const eventsData = res.events || [];
+        // Ensure we're setting an array
+        const eventsData = Array.isArray(res.data) ? res.data : [];
         setEvents(eventsData);
         eventsCache.set(eventsData);
       } else {
         addToast(res.message || "Failed to fetch events", "error");
+        setEvents([]); // Ensure events is set to empty array on failure
       }
     } catch (error) {
       addToast("Error fetching events", "error");
       console.error("Error loading events:", error);
+      setEvents([]); // Ensure events is set to empty array on error
     } finally {
       setLoading(false);
     }
-  }, [addToast]);
+}, [addToast]);
 
   useEffect(() => {
     const loadData = async () => {

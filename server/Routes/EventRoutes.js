@@ -12,21 +12,34 @@ router.get('/events', async (req, res) => {
     res.json({ success: true, events });
   } catch (error) {
     console.error('Error fetching events:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch events' });
+    res.status(500).json({ success: false, message: 'Failed to fetch events' , data:[]});
   }
 });
 
 // Get single event by ID
 router.get('/events/:id', async (req, res) => {
+  console.log("backend recieved a request for event");
   try {
     const event = await Event.findById(req.params.id);
     if (!event) {
-      return res.status(404).json({ success: false, message: 'Event not found' });
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Event not found',
+        data: null  // Explicitly set data to null when not found
+      });
     }
-    res.json({ success: true, event });
+    res.json({ 
+      success: true, 
+      message: 'Event fetched successfully',
+      data: event  // Consistent data property
+    });
   } catch (error) {
     console.error('Error fetching event:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch event' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch event',
+      data: null  // Explicitly set data to null on error
+    });
   }
 });
 

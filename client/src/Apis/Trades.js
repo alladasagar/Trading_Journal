@@ -1,8 +1,6 @@
 import axios from "axios";
 import dayjs from "dayjs";
 
-
-// const BASE_URL = "http://localhost:5000";
 const BASE_URL = "https://trading-journal-zv1a.onrender.com";
 
 // Add a trade for a given strategy ID

@@ -1,6 +1,5 @@
 import axios from "axios";
 
-// const BASE_URL = "http://localhost:5000";
 const BASE_URL = "https://trading-journal-zv1a.onrender.com";
 
 export const addPremarket = async (data) => {
@@ -17,10 +16,7 @@ export const addPremarket = async (data) => {
     console.log("Api request come to fetch premarkets");
     const response = await axios.get(`${BASE_URL}/getpremarket`);
     console.log(response.data);
-    return {
-      success: true,
-      data: response.data
-    };
+    return {success: true,data: response.data};
   } catch (error) {
     console.error("Error fetching premarket data:", error);
     return {

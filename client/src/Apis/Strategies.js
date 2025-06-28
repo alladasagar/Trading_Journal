@@ -1,10 +1,9 @@
-// src/Apis/Strategies.js
+
 import axios from "axios";
 
-// const BASE_URL = "http://localhost:5000"; // Or use import.meta.env.VITE_API_URL
 const BASE_URL = "https://trading-journal-zv1a.onrender.com";
 
-// ✅ Add a new strategy
+//  Add a new strategy
 export const addStrategy = async (strategyName, entryRules, exitRules) => {
   try {
     const response = await axios.post(`${BASE_URL}/addstrategy`, {
@@ -25,7 +24,7 @@ export const addStrategy = async (strategyName, entryRules, exitRules) => {
   }
 };
 
-// ✅ Fetch all strategies
+//  Fetch all strategies
 export const fetchStrategies = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/strategies`);
