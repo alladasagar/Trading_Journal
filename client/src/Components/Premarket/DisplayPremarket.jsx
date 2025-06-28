@@ -2,7 +2,7 @@ import React, { memo, useState } from "react";
 import { deletePremarket } from "../../Apis/Premarket";
 import { useToast } from "../context/ToastContext";
 import { useNavigate } from "react-router-dom";
-import { FiEdit, FiTrash2, FiX, FiCalendar, FiFileText } from "react-icons/fi";
+import { FiEdit, FiTrash2, FiX, FiCalendar, FiFileText, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import ConfirmModal from "../ui/ConfirmModal";
 import dayjs from "dayjs";
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -24,8 +24,16 @@ const DisplayPremarket = (props) => {
     startDate: "",
     endDate: "",
   });
+  const [expandedNotes, setExpandedNotes] = useState({});
   const { addToast } = useToast();
   const navigate = useNavigate();
+
+  const toggleNoteExpansion = (id) => {
+    setExpandedNotes(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
 
   // Sort and filter logic
   const sortedPlans = [...plans].sort((a, b) => 
@@ -181,7 +189,29 @@ const DisplayPremarket = (props) => {
                       {item.note && (
                         <div>
                           <h4 className="text-sm font-medium text-gray-400">Analysis Note</h4>
-                          <p className="text-gray-200 mt-1 whitespace-pre-line">{item.note}</p>
+                          <div className="mt-1">
+                            <p 
+                              className={`text-gray-200 whitespace-pre-line ${!expandedNotes[item._id] ? 'line-clamp-2' : ''}`}
+                            >
+                              {item.note}
+                            </p>
+                            {item.note.split('\n').length > 2 || item.note.length > 150 ? (
+                              <button
+                                onClick={() => toggleNoteExpansion(item._id)}
+                                className="text-blue-400 hover:text-blue-300 text-sm mt-1 flex items-center gap-1"
+                              >
+                                {expandedNotes[item._id] ? (
+                                  <>
+                                    <FiChevronUp size={16} /> Show less
+                                  </>
+                                ) : (
+                                  <>
+                                    <FiChevronDown size={16} /> View more
+                                  </>
+                                )}
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                       )}
                     </div>
