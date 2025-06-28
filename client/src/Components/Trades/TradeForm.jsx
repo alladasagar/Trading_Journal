@@ -12,7 +12,6 @@ const TradeForm = ({ isEdit = false }) => {
   const navigate = useNavigate();
   const { addToast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
-  const [previewImage, setPreviewImage] = useState("");
   const [loading, setLoading] = useState(isEdit);
 
   const [strategy, setStrategy] = useState({
@@ -64,8 +63,6 @@ const TradeForm = ({ isEdit = false }) => {
     roi: 0,
   });
 
-  const [errors, setErrors] = useState({});
-
   // Load trade data if in edit mode
   useEffect(() => {
     if (!isEdit) return;
@@ -94,14 +91,12 @@ const TradeForm = ({ isEdit = false }) => {
             day: trade.day || (entryDate ? new Date(entryDate).toLocaleDateString("en-US", { weekday: "long" }) : ""),
             time: trade.time || "",
             duration: trade.duration || "",
-            screenshots: trade.screenshots || [], // Update this line
+            screenshots: trade.screenshots || [],
             mistakes: Array.isArray(trade.mistakes) && trade.mistakes.length > 0 ? trade.mistakes : [""],
             emojis: trade.emojis || "",
             entry_rules: Array.isArray(trade.entry_rules) ? trade.entry_rules : [],
             exit_rules: Array.isArray(trade.exit_rules) ? trade.exit_rules : []
           }));
-
-          // Remove the previewImage state as we're using screenshots array now
         } else {
           addToast(result.message || "Failed to load trade", "error");
         }
@@ -142,7 +137,6 @@ const TradeForm = ({ isEdit = false }) => {
       });
       setForm(prev => ({ ...prev, day: weekday }));
     }
-
 
     const entry = parseFloat(form.entry) || 0;
     const exit = parseFloat(form.exit) || 0;
@@ -195,84 +189,9 @@ const TradeForm = ({ isEdit = false }) => {
     form.exit_date,
   ]);
 
-  const validateForm = () => {
-    const newErrors = {};
-    const requiredFields = [
-      'name',
-      'side',
-      'entry',
-      'exit',
-      'stop_loss',
-      'shares',
-      'charges',
-      'entry_date'
-    ];
-
-    // Validate required fields
-    requiredFields.forEach((field) => {
-      if (!form[field]) {
-        newErrors[field] = `${field.replace(/_/g, ' ')} is required`;
-      }
-    });
-
-    // Validate array fields
-    if (!form.entry_rules || form.entry_rules.length === 0) {
-      newErrors.entry_rules = 'At least one entry rule must be selected';
-    }
-
-    if (!form.exit_rules || form.exit_rules.length === 0) {
-      newErrors.exit_rules = 'At least one exit rule must be selected';
-    }
-
-    // Validate number fields
-    const numberFields = ['entry', 'exit', 'stop_loss', 'shares', 'target'];
-    numberFields.forEach((field) => {
-      if (form[field] && isNaN(form[field])) {
-        newErrors[field] = `${field.replace(/_/g, ' ')} must be a valid number`;
-      } else if (form[field] && parseFloat(form[field]) < 0) {
-        newErrors[field] = `${field.replace(/_/g, ' ')} must be positive`;
-      }
-    });
-
-    // Validate shares is a whole number
-    if (form.shares && !Number.isInteger(parseFloat(form.shares))) {
-      newErrors.shares = 'Shares must be a whole number';
-    }
-
-    // Validate dates
-    if (form.entry_date) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const entryDate = new Date(form.entry_date);
-
-      // Set both dates to midnight for accurate comparison
-      const entryDateAtMidnight = new Date(entryDate);
-      entryDateAtMidnight.setHours(0, 0, 0, 0);
-
-      if (entryDateAtMidnight > today) {
-        newErrors.entry_date = 'Entry date cannot be in the future';
-      }
-    }
-
-    if (form.exit_date && form.entry_date) {
-      const entryDate = new Date(form.entry_date);
-      const exitDate = new Date(form.exit_date);
-
-      if (exitDate < entryDate) {
-        newErrors.exit_date = 'Exit date must be after entry date';
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: null }));
-    }
   };
 
   const handleArrayChange = (field, index, value) => {
@@ -290,7 +209,6 @@ const TradeForm = ({ isEdit = false }) => {
     setForm(prev => ({ ...prev, [field]: updated }));
   };
 
-  // 2. Update the image upload handler
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -312,7 +230,6 @@ const TradeForm = ({ isEdit = false }) => {
     setIsUploading(true);
 
     try {
-      // Upload all files in parallel
       const uploadPromises = files.map(file => {
         const formData = new FormData();
         formData.append("file", file);
@@ -345,13 +262,13 @@ const TradeForm = ({ isEdit = false }) => {
     }
   };
 
-  // 3. Add a function to remove an image
   const removeImage = (index) => {
     setForm(prev => ({
       ...prev,
       screenshots: prev.screenshots.filter((_, i) => i !== index)
     }));
   };
+
   useEffect(() => {
     if (form.entry_date) {
       const dayOfWeek = new Date(form.entry_date).toLocaleDateString("en-US", {
@@ -364,28 +281,23 @@ const TradeForm = ({ isEdit = false }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      addToast("Please fill all required fields correctly", "error");
-      return;
-    }
-
     try {
       const tradeData = {
         ...form,
         ...calculated,
         strategyId: strategyId,
-        entry: parseFloat(form.entry),
+        entry: form.entry ? parseFloat(form.entry) : null,
         exit: form.exit ? parseFloat(form.exit) : null,
-        stop_loss: parseFloat(form.stop_loss),
-        shares: parseFloat(form.shares),
-        charges: parseFloat(form.charges),
+        stop_loss: form.stop_loss ? parseFloat(form.stop_loss) : null,
+        shares: form.shares ? parseFloat(form.shares) : null,
+        charges: form.charges ? parseFloat(form.charges) : null,
         target: form.target ? parseFloat(form.target) : null,
         mistakes: form.mistakes.filter((m) => m !== ""),
         emojis: form.emojis,
         screenshots: form.screenshots,
         entry_rules: form.entry_rules,
         exit_rules: form.exit_rules,
-        entry_date: new Date(form.entry_date).toISOString(),
+        entry_date: form.entry_date ? new Date(form.entry_date).toISOString() : null,
         exit_date: form.exit_date ? new Date(form.exit_date).toISOString() : null,
       };
 
@@ -411,9 +323,7 @@ const TradeForm = ({ isEdit = false }) => {
   };
 
   if (loading) {
-    return (
-      <Loader />
-    );
+    return <Loader />;
   }
 
   return (
@@ -425,15 +335,14 @@ const TradeForm = ({ isEdit = false }) => {
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Trade Name */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-1">Trade Name *</label>
+          <label className="block text-sm font-medium mb-1">Trade Name</label>
           <input
             name="name"
             value={form.name}
             onChange={handleChange}
             placeholder="My Awesome Trade"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.name ? "border-red-500" : "border-gray-700"}`}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
           />
-          {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
         </div>
 
         {/* Day */}
@@ -449,7 +358,7 @@ const TradeForm = ({ isEdit = false }) => {
 
         {/* Side */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-1">Side *</label>
+          <label className="block text-sm font-medium mb-1">Side</label>
           <select
             name="side"
             value={form.side}
@@ -464,7 +373,6 @@ const TradeForm = ({ isEdit = false }) => {
         {/* Entry Rules */}
         <div className="col-span-2 bg-gray-800 p-4 rounded-lg">
           <h3 className="text-lg font-semibold mb-2 text-emerald-400">Entry Rules</h3>
-          {errors.entry_rules && <p className="text-red-400 text-xs mb-2">{errors.entry_rules}</p>}
           {strategy.entry_rules.length > 0 ? (
             <ul className="space-y-2">
               {strategy.entry_rules.map((rule, index) => (
@@ -495,7 +403,6 @@ const TradeForm = ({ isEdit = false }) => {
         {/* Exit Rules */}
         <div className="col-span-2 bg-gray-800 p-4 rounded-lg">
           <h3 className="text-lg font-semibold mb-2 text-emerald-400">Exit Rules</h3>
-          {errors.exit_rules && <p className="text-red-400 text-xs mb-2">{errors.exit_rules}</p>}
           {strategy.exit_rules.length > 0 ? (
             <ul className="space-y-2">
               {strategy.exit_rules.map((rule, index) => (
@@ -525,7 +432,7 @@ const TradeForm = ({ isEdit = false }) => {
 
         {/* Entry Price */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-1">Entry Price *</label>
+          <label className="block text-sm font-medium mb-1">Entry Price</label>
           <input
             type="number"
             step="0.01"
@@ -533,14 +440,13 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.entry}
             onChange={handleChange}
             placeholder="100.50"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.entry ? "border-red-500" : "border-gray-700"}`}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
           />
-          {errors.entry && <p className="text-red-400 text-xs mt-1">{errors.entry}</p>}
         </div>
 
         {/* Exit Price */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-1">Exit Price *</label>
+          <label className="block text-sm font-medium mb-1">Exit Price</label>
           <input
             type="number"
             step="0.01"
@@ -548,14 +454,13 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.exit}
             onChange={handleChange}
             placeholder="105.75"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.exit ? "border-red-500" : "border-gray-700"}`}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
           />
-          {errors.exit && <p className="text-red-400 text-xs mt-1">{errors.exit}</p>}
         </div>
 
         {/* Stop Loss */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-1">Stop Loss *</label>
+          <label className="block text-sm font-medium mb-1">Stop Loss</label>
           <input
             type="number"
             step="0.01"
@@ -563,28 +468,26 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.stop_loss}
             onChange={handleChange}
             placeholder="95.25"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.stop_loss ? "border-red-500" : "border-gray-700"}`}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
           />
-          {errors.stop_loss && <p className="text-red-400 text-xs mt-1">{errors.stop_loss}</p>}
         </div>
 
         {/* Shares */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-1">Shares *</label>
+          <label className="block text-sm font-medium mb-1">Shares</label>
           <input
             type="number"
             name="shares"
             value={form.shares}
             onChange={handleChange}
             placeholder="100"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.shares ? "border-red-500" : "border-gray-700"}`}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
           />
-          {errors.shares && <p className="text-red-400 text-xs mt-1">{errors.shares}</p>}
         </div>
 
         {/* Charges */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-1">Charges *</label>
+          <label className="block text-sm font-medium mb-1">Charges</label>
           <input
             type="number"
             step="0.01"
@@ -592,9 +495,8 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.charges}
             onChange={handleChange}
             placeholder="20.50"
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.charges ? "border-red-500" : "border-gray-700"}`}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
           />
-          {errors.charges && <p className="text-red-400 text-xs mt-1">{errors.charges}</p>}
         </div>
 
         {/* Target */}
@@ -613,15 +515,14 @@ const TradeForm = ({ isEdit = false }) => {
 
         {/* Entry Date */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-1">Entry Date *</label>
+          <label className="block text-sm font-medium mb-1">Entry Date</label>
           <input
             type="date"
             name="entry_date"
             value={form.entry_date}
             onChange={handleChange}
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.entry_date ? "border-red-500" : "border-gray-700"}`}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
           />
-          {errors.entry_date && <p className="text-red-400 text-xs mt-1">{errors.entry_date}</p>}
         </div>
 
         {/* Exit Date */}
@@ -632,9 +533,8 @@ const TradeForm = ({ isEdit = false }) => {
             name="exit_date"
             value={form.exit_date}
             onChange={handleChange}
-            className={`w-full p-2 rounded bg-gray-800 border ${errors.exit_date ? "border-red-500" : "border-gray-700"}`}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
           />
-          {errors.exit_date && <p className="text-red-400 text-xs mt-1">{errors.exit_date}</p>}
         </div>
 
         {/* Time */}
@@ -726,8 +626,6 @@ const TradeForm = ({ isEdit = false }) => {
             )}
           </div>
         </div>
-
-
 
         {/* Mistakes */}
         <div className="col-span-2">

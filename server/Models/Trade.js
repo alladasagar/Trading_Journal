@@ -2,20 +2,17 @@
 import mongoose from "mongoose";
 
 const tradeSchema = new mongoose.Schema({
-  name: { type: String, required: true },
+  name: { type: String },
   strategyId: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: "Strategy", 
-    required: true 
+    ref: "Strategy"
   },
   side: { 
     type: String, 
-    enum: ["Short", "Long"], 
-    required: true 
+    enum: ["Short", "Long"]
   },
   entry: { 
-    type: Number, 
-    required: true,
+    type: Number,
     set: v => parseFloat(v.toFixed(2))
   },
   exit: { 
@@ -23,18 +20,15 @@ const tradeSchema = new mongoose.Schema({
     set: v => v ? parseFloat(v.toFixed(2)) : null
   },
   stop_loss: { 
-    type: Number, 
-    required: true,
+    type: Number,
     set: v => parseFloat(v.toFixed(2))
   },
   shares: { 
-    type: Number, 
-    required: true,
+    type: Number,
     set: v => parseFloat(v.toFixed(2))
   },
   charges: { 
-    type: Number, 
-    required: true,
+    type: Number,
     set: v => parseFloat(v.toFixed(2))
   },
   target: { 
@@ -42,9 +36,9 @@ const tradeSchema = new mongoose.Schema({
     set: v => v ? parseFloat(v.toFixed(2)) : null
   },
   notes: { type: String },
-  day: { type: String, required: true },
+  day: { type: String },
   time: { type: String },
-  entry_date: { type: Date, required: true },
+  entry_date: { type: Date },
   exit_date: { type: Date },
   duration: { type: String },
   screenshots: {
@@ -56,12 +50,10 @@ const tradeSchema = new mongoose.Schema({
   // Strategy rules at time of trade creation
   entry_rules: [{ 
     type: String,
-    required: true,
     default: []
   }],
   exit_rules: [{ 
     type: String,
-    required: true,
     default: []
   }],
   // Calculated fields

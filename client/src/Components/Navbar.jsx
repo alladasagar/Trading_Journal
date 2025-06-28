@@ -4,10 +4,10 @@ import ConfirmModal from "./ui/ConfirmModal";
 import { useToast } from "./context/ToastContext";
 
 const Home = lazy(() => import("../Pages/HomePage"));
-const Premarket = lazy(() => import("../Components/Premarket/Premarket"));
-const Strategies = lazy(() => import("../Components/Strategies/Strategies"));
-const TradesPage = lazy(() => import("../Components/Trades/TradesPage"));
-const EventsPage = lazy(() => import("../Components/Events/EventsPage"));
+const Premarket = lazy(() => import("./Premarket/Premarket"));
+const Strategies = lazy(() => import("./Strategies/Strategies"));
+const TradesPage = lazy(() => import("./Trades/TradesPage"));
+const EventsPage = lazy(() => import("./Events/EventsPage"));
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
