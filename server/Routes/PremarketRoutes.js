@@ -67,14 +67,6 @@ router.delete('/deletepremarket/:id', async (req, res) => {
   }
 });
 
-router.get('/getpremarketplans', async (req, res) => {
-  try {
-    const all = await Premarket.find().sort({ date: -1 }); // or createdAt: -1
-    res.status(200).json(all);
-  } catch (error) {
-    res.status(500).json({ message: "Error fetching premarket data" });
-  }
-});
 
 
 export default router;

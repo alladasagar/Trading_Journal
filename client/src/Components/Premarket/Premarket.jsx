@@ -41,17 +41,14 @@ const Premarket = () => {
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     loadPlans();
   }, [loadPlans]);
 
-  // Handle reload when location state changes
   useEffect(() => {
     if (location.state?.reload && !isReloading) {
       setIsReloading(true);
       loadPlans(true);
-      // Clear the reload state
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, loadPlans, navigate, location.pathname, isReloading]);
@@ -65,7 +62,7 @@ const Premarket = () => {
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate("/addpremarket")}
-          className="flex items-center gap-2 bg-[#27c284] hover:bg-[#1fa769] text-white px-4 py-2 rounded-md transition-colors"
+          className="flex items-center gap-2 bg-[#27c284] hover:bg-[#1fa769] text-white px-4 py-2 rounded-md transition-colors cursor-pointer"
         >
           <AiOutlinePlus className="text-lg" />
           Add Premarket Plan

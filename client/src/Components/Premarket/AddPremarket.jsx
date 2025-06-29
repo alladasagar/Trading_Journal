@@ -77,7 +77,7 @@ const AddPremarket = () => {
     <div className="max-w-3xl mx-auto p-6 space-y-6">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-gray-300 hover:text-white"
+        className="flex items-center gap-2 text-gray-300 hover:text-white cursor-pointer"
       >
         ← Back to Premarket
       </button>
@@ -139,7 +139,7 @@ const AddPremarket = () => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-[#27c284] hover:bg-[#1fa769] text-white py-2 px-4 rounded-md disabled:opacity-50"
+          className="w-full bg-[#27c284] hover:bg-[#1fa769] text-white py-2 px-4 rounded-md disabled:opacity-50 cursor-pointer"
         >
           {loading ? "Processing..." : isEdit ? "Update" : "Save"}
         </button>
