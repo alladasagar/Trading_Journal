@@ -32,6 +32,7 @@ const ViewTrade = () => {
         const result = await fetchTradeById(id);
         if (result.success) {
           setTrade(result.trade);
+          console.log(result.trade);
         } else {
           addToast(result.message || "Failed to fetch trade", "error");
           navigate(-1);
@@ -193,6 +194,7 @@ const ViewTrade = () => {
                 <span className="text-sm sm:text-base text-gray-400">Day</span>
                 <span className="text-sm sm:text-base font-medium capitalize">{trade.day?.toLowerCase()}</span>
               </div>
+              
             </div>
           </div>
 
@@ -334,12 +336,6 @@ const ViewTrade = () => {
                 )}
               </div>
               <div>
-                <h4 className="text-xs sm:text-sm text-gray-400 mb-1">Notes</h4>
-                <p className="text-xs sm:text-sm text-gray-300 whitespace-pre-line">
-                  {trade.notes || <span className="text-gray-500 italic">No notes available</span>}
-                </p>
-              </div>
-              <div>
                 <h4 className="text-xs sm:text-sm text-gray-400 mb-1">Emojis</h4>
                 {trade.emojis && (Array.isArray(trade.emojis) ? trade.emojis.length > 0 : trade.emojis.length > 0) ? (
                   <div className="flex flex-wrap gap-2 sm:gap-3 text-xl sm:text-2xl">
@@ -357,6 +353,13 @@ const ViewTrade = () => {
                   <p className="text-xl sm:text-2xl">😐</p>
                 )}
               </div>
+              <div>
+                <h4 className="text-xs sm:text-sm text-gray-400 mb-1">Notes</h4>
+                <p className="text-xs sm:text-sm text-gray-300 whitespace-pre-line">
+                  {trade.notes || <span className="text-gray-500 italic">No notes available</span>}
+                </p>
+              </div>
+              
             </div>
           </div>
 

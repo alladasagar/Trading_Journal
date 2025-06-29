@@ -59,7 +59,7 @@ export const fetchEventById = async (eventId) => {
     return {
       success: response.data.success,
       message: response.data.message || '',
-      event: response.data.event || null  
+      event: response.data.data || null  
     };
   } catch (error) {
     return { 

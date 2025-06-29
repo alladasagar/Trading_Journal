@@ -171,8 +171,8 @@ const TradesPage = () => {
 
                   <div className="mt-3 flex justify-between items-center">
                     <div>
-                      {trade.emojis && (
-                        <span className="text-sm mr-2">{trade.emojis}</span>
+                      {trade.emoji && (
+                        <span className="text-sm mr-2">{trade.emoji}</span>
                       )}
                       {trade.note && (
                         <>
@@ -274,7 +274,7 @@ const TradesPage = () => {
                       {trade.roi}%
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-300 sm:px-4">
-                      {trade.emojis || "-"}
+                      {trade.emoji || "-"}
                     </td>
                     <td className="px-3 py-3 text-sm text-gray-300 sm:px-4">
                       <button
