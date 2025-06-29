@@ -16,12 +16,9 @@ export const addPremarket = async (data) => {
 
  export const fetchPremarket = async () => {
   try {
-    console.log("Api request come to fetch premarkets");
     const response = await axios.get(`${BASE_URL}/getpremarket`);
-    console.log(response.data);
     return {success: true,data: response.data};
   } catch (error) {
-    console.error("Error fetching premarket data:", error);
     return {
       success: false,
       message: error.response?.data?.message || "Failed to fetch premarket data",

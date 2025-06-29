@@ -190,12 +190,12 @@ const TradesPage = () => {
                       </button>
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-300 sm:px-6">
-                      {trade.notes ? (
+                      {trade.note ? (
                         
                         <>
                           <div
                             data-tooltip-id={`note-tooltip-${trade._id}`}
-                            data-tooltip-content={trade.notes}
+                            data-tooltip-content={trade.note}
                             className="inline-block"
                           >
                             <FaStickyNote

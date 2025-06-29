@@ -9,15 +9,27 @@ const router = express.Router();
 // Use consistent base path for all strategy routes
 router.route('/strategies')
   .get(async (req, res) => {
-    try {
-      console.log("Request Reached to backend");
-      const strategies = await Strategy.find({});
-      console.log("Backend response:", strategies);
-      res.status(200).json({ strategies });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  })
+  try {
+    console.log("Request Reached to backend");
+    const strategies = await Strategy.find(
+      {}, 
+      {
+        name: 1,
+        win_rate: 1,
+        net_pnl: 1,
+        max_win: 1,
+        max_loss: 1,
+        number_of_trades: 1
+      }
+    ).lean(); 
+
+    console.log("Backend response:", strategies);
+    res.status(200).json({ strategies });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+})
+
 
   .post(async (req, res) => {
     try {
@@ -54,10 +66,7 @@ router.route('/strategies/:id')
     try {
       const strategyId = req.params.id;
 
-      // Delete the strategy
       await Strategy.findByIdAndDelete(strategyId);
-
-      // Delete all trades that reference this strategy
       await Trade.deleteMany({ strategyId: strategyId });
 
       res.status(200).json({ message: "Strategy and associated trades deleted successfully" });

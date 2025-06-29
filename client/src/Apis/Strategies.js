@@ -66,7 +66,6 @@ export const updateStrategy = async (id, updatedData) => {
     const response = await axios.put(`${BASE_URL}/strategies/${id}`, updatedData);
     return { status: response.status, data: response.data };
   } catch (error) {
-    console.error("Update strategy error:", error);
     return { status: 500, message: "Failed to update strategy" };
   }
 };

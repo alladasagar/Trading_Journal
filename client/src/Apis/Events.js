@@ -6,15 +6,12 @@ const BASE_URL = "https://trading-journal-zv1a.onrender.com";
 //Api for fetch All Events
 export const fetchEvents = async () => {
     try {
-      console.log("EventsRequest received to Api and sent to backend");
       const response = await axios.get(`${BASE_URL}/events`);
-      // Ensure we're returning an array of events
       return { 
         success: true, 
         data: Array.isArray(response.data.events) ? response.data.events : [] 
       };
     } catch (error) {
-      console.error("Error fetching events:", error);
       return { success: false, message: error.message, data: [] };
     }
 };
@@ -59,17 +56,12 @@ export const fetchEventById = async (eventId) => {
   console.log("request received for fetch event with id", eventId);
   try {
     const response = await axios.get(`${BASE_URL}/events/${eventId}`);
-    console.log(response);
-    
-    // Match the actual API response structure
     return {
       success: response.data.success,
       message: response.data.message || '',
-      event: response.data.event || null  // Changed from data to event
+      event: response.data.event || null  
     };
   } catch (error) {
-    console.error("Error fetching event:", error);
-    
     return { 
       success: false,
       message: error.response?.data?.message || "Failed to fetch event",

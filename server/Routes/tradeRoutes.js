@@ -228,11 +228,6 @@ router.get("/strategies/:strategyId/trades", async (req, res) => {
   }
 });
 
-
-
-
-
-
 // 📥 Get a single trade
 router.get("/trades/:id", async (req, res) => {
   const { id } = req.params;

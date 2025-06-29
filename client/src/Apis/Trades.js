@@ -40,7 +40,6 @@ export const fetchTradeById = async (id) => {
 // Update trade by ID
 export const updateTrade = async (tradeId, tradeData) => {
   try {
-    console.log(tradeData);
     const res = await axios.put(`${BASE_URL}/trades/${tradeId}`, tradeData, {
       headers: {
         "Content-Type": "application/json",
@@ -61,7 +60,6 @@ export const deleteTrade = async (tradeId) => {
     });
     return res.data;
   } catch (error) {
-    console.error("Error deleting trade:", error);
     return { success: false, message: "Failed to delete trade" };
   }
 };
