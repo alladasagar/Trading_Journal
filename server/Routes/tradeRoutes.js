@@ -5,7 +5,6 @@ import Strategy from "../Models/Strategy.js";
 import dayjs from "dayjs";
 
 const router = express.Router();
-// Utility to update strategy stats
 const updateStrategyStats = async (strategyId) => {
   const strategy = await Strategy.findById(strategyId).populate("trades");
   if (!strategy) return;
@@ -26,30 +25,26 @@ const updateStrategyStats = async (strategyId) => {
     strategy.max_win = Math.max(...trades.map(t => t.net_pnl));
     strategy.max_loss = Math.min(...trades.map(t => t.net_pnl));
     strategy.number_of_trades = trades.length;
-    strategy.trades = trades.map(t => t._id); // Sync trade list
+    strategy.trades = trades.map(t => t._id); 
   }
 
   await strategy.save();
 };
 
-// ✅ Add Trade
+//  Add Trade
 router.post("/strategy/:strategyId/trades", async (req, res) => {
   const { strategyId } = req.params;
   let tradeData = req.body;
 
   try {
-    // ✅ Validate strategy exists
     const strategy = await Strategy.findById(strategyId);
     if (!strategy) {
       return res.status(404).json({ success: false, message: "Strategy not found" });
     }
-
-    // ✅ Ensure required fields
     if (!tradeData.day || tradeData.day.trim() === "") {
       return res.status(400).json({ success: false, message: "Field 'day' is required" });
     }
 
-    // ✅ Normalize arrays
     const normalizedTrade = {
       ...tradeData,
       screenshots: Array.isArray(tradeData.screenshots) ? tradeData.screenshots : [],
@@ -62,7 +57,6 @@ router.post("/strategy/:strategyId/trades", async (req, res) => {
       firstScreenshot: normalizedTrade.screenshots[0] || 'none'
     });
 
-    // ✅ Create trade explicitly
     const newTrade = new Trade({
       name: normalizedTrade.name,
       strategyId,
@@ -94,7 +88,6 @@ router.post("/strategy/:strategyId/trades", async (req, res) => {
     const savedTrade = await newTrade.save();
     console.log("Saved trade screenshots:", savedTrade.screenshots);
 
-    // ✅ Update strategy stats
     await updateStrategyStats(strategyId);
 
     return res.status(201).json({
@@ -136,7 +129,6 @@ router.put('/trades/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Trade not found' });
     }
 
-    // Explicitly update fields — this ensures screenshots and arrays are updated correctly
     const fieldsToUpdate = [
       'name', 'side', 'entry', 'exit', 'stop_loss', 'target', 'shares',
       'charges', 'notes', 'day', 'time', 'entry_date', 'exit_date',
@@ -161,7 +153,7 @@ router.put('/trades/:id', async (req, res) => {
 });
 
 
-// ❌ Delete Trade
+//  Delete Trade
 router.delete('/trades/:id', async (req, res) => {
   try {
     const trade = await Trade.findByIdAndDelete(req.params.id);
@@ -178,7 +170,7 @@ router.delete('/trades/:id', async (req, res) => {
   }
 });
 
-// 📥 Get all trades for strategy
+//  Get all trades for strategy
 router.get("/strategies/:strategyId/trades", async (req, res) => {
   const { strategyId } = req.params;
 
@@ -228,7 +220,7 @@ router.get("/strategies/:strategyId/trades", async (req, res) => {
   }
 });
 
-// 📥 Get a single trade
+//  Get a single trade
 router.get("/trades/:id", async (req, res) => {
   const { id } = req.params;
 
@@ -255,49 +247,46 @@ router.get("/trades/:id", async (req, res) => {
 });
 
 
-
 router.get("/trades", async (req, res) => {
   try {
     let { startDate, endDate } = req.query;
 
     let query = {};
-    if (startDate && endDate) {
-      // Convert to Date objects
-      startDate = dayjs(startDate).startOf("day").toDate();
-      endDate = dayjs(endDate).endOf("day").toDate();
+    let start, end;
 
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    if (startDate && endDate) {
+      start = dayjs(startDate).startOf("day").toDate();
+      end = dayjs(endDate).endOf("day").toDate();
+
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         return res.status(400).json({
           success: false,
           message: "Invalid date format. Use YYYY-MM-DD",
         });
       }
 
-      if (startDate > endDate) {
+      if (start > end) {
         return res.status(400).json({
           success: false,
           message: "startDate cannot be after endDate",
         });
       }
 
-      query.entry_date = { $gte: startDate, $lte: endDate };
+      query.entry_date = { $gte: start, $lte: end };
     } else {
-      // Default: fetch trades from past 1 month
-      const oneMonthAgo = new Date();
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      const oneMonthAgo = dayjs().subtract(1, "month").startOf("day").toDate();
       query.entry_date = { $gte: oneMonthAgo };
     }
 
-    const trades = await Trade.find(query)
-      .select("entry_date net_pnl -_id")
-      .sort({ entry_date: 1 });
+    const trades = await Trade.find(query, {
+      entry_date: 1,
+      net_pnl: 1,
+      _id: 0,
+    }).sort({ entry_date: 1 }).lean(); 
 
     res.json({
       success: true,
-      trades: trades.map((t) => ({
-        entry_date: t.entry_date,
-        net_pnl: t.net_pnl,
-      })),
+      trades,
     });
   } catch (error) {
     console.error("Error fetching trades:", error);

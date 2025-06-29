@@ -149,6 +149,7 @@ const HomePage = () => {
           dateRange.startDate,
           dateRange.endDate
         );
+        console.log(result);
         if (result.success) {
           const processedData = processPnlData(result.trades);
           setTrades(result.trades);
