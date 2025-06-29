@@ -183,24 +183,55 @@ router.get("/strategies/:strategyId/trades", async (req, res) => {
   const { strategyId } = req.params;
 
   try {
-    const strategy = await Strategy.findById(strategyId).populate("trades");
-    if (!strategy) {
-      return res.status(404).json({ success: false, message: "Strategy not found" });
-    }
+    const trades = await Trade.find(
+      { strategyId },
+      {
+        name: 1,
+        entry_date: 1,
+        day: 1,
+        side: 1,
+        net_pnl: 1,
+        percent_pnl: 1,
+        roi: 1,
+        emojis: 1,
+        leverage: 1,
+        notes: 1,
+        _id: 1, // keep _id for React key
+      }
+    ).lean();
 
-    res.status(200).json({
+    const formatted = trades.map((t) => ({
+      _id: t._id,
+      name: t.name,
+      date: t.entry_date,
+      day: t.day,
+      side: t.side,
+      net_pnl: t.net_pnl,
+      percent_pnl: t.percent_pnl,
+      roi: t.roi,
+      emoji: t.emojis,
+      leverage: t.leverage || "—",
+      note: t.notes || "",
+    }));
+
+    return res.status(200).json({
       success: true,
       message: "Trades fetched successfully",
-      trades: strategy.trades,
+      trades: formatted,
     });
   } catch (error) {
     console.error("Error fetching trades:", error);
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to fetch trades",
+      message: "Failed to fetch trades",
     });
   }
 });
+
+
+
+
+
 
 // 📥 Get a single trade
 router.get("/trades/:id", async (req, res) => {

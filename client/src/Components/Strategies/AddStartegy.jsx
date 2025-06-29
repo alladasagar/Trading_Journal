@@ -107,11 +107,10 @@ const AddStrategy = () => {
 
   return (
     <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
-      {/* Header with back button */}
       <div className="flex items-center justify-between mb-4">
         <button 
           onClick={() => navigate(-1)}
-          className="flex items-center text-[#27c284] hover:text-[#1fa769] transition-colors"
+          className="flex items-center text-[#27c284] hover:text-[#1fa769] transition-colors cursor-pointer"
         >
           <FaArrowLeft className="mr-2" />
           Back to Strategies
@@ -119,10 +118,9 @@ const AddStrategy = () => {
         <h1 className="text-lg sm:text-xl text-white font-semibold">
           {isEdit ? "Edit Strategy" : "Create New Strategy"}
         </h1>
-        <div className="w-10"></div> {/* Spacer for alignment */}
+        <div className="w-10"></div> 
       </div>
 
-      {/* Strategy Name */}
       <div className="space-y-2">
         <label className="block text-sm sm:text-base text-gray-300">Strategy Name</label>
         <input
@@ -201,10 +199,9 @@ const AddStrategy = () => {
         </ul>
       </div>
 
-      {/* Save Button */}
       <button 
         onClick={handleSave} 
-        className="w-full bg-[#27c284] hover:bg-[#1fa769] p-3 rounded text-white font-medium flex items-center justify-center transition-colors"
+        className="w-full bg-[#27c284] hover:bg-[#1fa769] p-3 rounded text-white font-medium flex items-center justify-center transition-colors cursor-pointer"
       >
         <FaSave className="mr-2" />
         {isEdit ? "Update Strategy" : "Save Strategy"}

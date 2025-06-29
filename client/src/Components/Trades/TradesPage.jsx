@@ -25,6 +25,7 @@ const TradesPage = () => {
     const loadTrades = async () => {
       setLoading(true);
       const result = await fetchTradesByStrategy(id);
+      console.log("Trdes:",result);
       if (result.success) {
         setTrades(result.trades);
       } else {

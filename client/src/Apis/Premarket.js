@@ -2,6 +2,7 @@ import axios from "axios";
 
 const BASE_URL = "https://trading-journal-zv1a.onrender.com";
 
+//Add premarket
 export const addPremarket = async (data) => {
   try {
     const response = await axios.post(`${BASE_URL}/addpremarket`, data);
@@ -10,6 +11,8 @@ export const addPremarket = async (data) => {
     return { success: false, message: "Failed to save premarket" };
   }
 };
+
+//fetch Premarket
 
  export const fetchPremarket = async () => {
   try {
@@ -27,6 +30,7 @@ export const addPremarket = async (data) => {
   }
 };
 
+// get Premarket details by id
 
 export const getPremarketById = async (id) => {
   try {
@@ -37,7 +41,7 @@ export const getPremarketById = async (id) => {
   }
 };
 
-
+//update the premarket
 export const updatePremarket = async (id, updatedData) => {
     try {
         const response = await axios.put(`${BASE_URL}/updatepremarket/${id}`, updatedData);
@@ -47,6 +51,7 @@ export const updatePremarket = async (id, updatedData) => {
     }
 };
 
+//delete the premarket
 export const deletePremarket = async (id) => {
   try {
     await axios.delete(`${BASE_URL}/deletepremarket/${id}`);

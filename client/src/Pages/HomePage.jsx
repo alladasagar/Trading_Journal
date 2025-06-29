@@ -36,7 +36,7 @@ const HomePage = () => {
     endDate: dayjs().format("YYYY-MM-DD")
   });
 
-   const handleClearDates = () => {
+  const handleClearDates = () => {
     setDateRange({
       startDate: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
       endDate: dayjs().format("YYYY-MM-DD")
@@ -80,7 +80,6 @@ const HomePage = () => {
     setCurrentMonth(newMonth);
   };
 
-  // Process PNL data
   const processPnlData = (trades) => {
     const pnlByDate = trades.reduce((acc, trade) => {
       const date = dayjs(trade.entry_date).format("MMM D");
@@ -122,11 +121,12 @@ const HomePage = () => {
 
     const filterTodaysEvents = (allEvents) => {
       const today = dayjs().format('YYYY-MM-DD');
-      const todaysEvents = allEvents.filter(event =>
+      const todaysEvents = (allEvents || []).filter(event =>
         dayjs(event.date).format('YYYY-MM-DD') === today
       );
       setEvents(todaysEvents);
     };
+
 
     loadEvents();
   }, []);
@@ -135,7 +135,7 @@ const HomePage = () => {
   useEffect(() => {
     const loadTrades = async () => {
       const cacheKey = `${dateRange.startDate}-${dateRange.endDate}`;
-      
+
       if (graphCache.isValid() && graphCache.get().data?.range === cacheKey) {
         const cachedData = graphCache.get().data;
         setTrades(cachedData.trades);
@@ -188,7 +188,7 @@ const HomePage = () => {
   // Generate calendar data with CalendarCache
   const generateCalendarData = async () => {
     const monthKey = currentMonth.format('YYYY-MM');
-    
+
     if (calendarCache.isValid() && calendarCache.get().data?.month === monthKey) {
       return calendarCache.get().data.calendarData;
     }

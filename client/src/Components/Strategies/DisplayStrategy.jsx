@@ -27,6 +27,7 @@ const DisplayStrategy = () => {
     }
 
     const result = await fetchStrategies();
+    console.log("Fetched Startegies:",result);
     setLoading(false);
     
     if (result.success) {

@@ -39,7 +39,7 @@ export const fetchStrategies = async () => {
   }
 };
 
-// ✅ Delete a strategy by ID
+//  Delete a strategy by ID
 export const deleteStrategy = async (strategyId) => {
   try {
     await axios.delete(`${BASE_URL}/strategies/${strategyId}`);
@@ -59,7 +59,7 @@ export const getStrategyById = async (id) => {
     }
 };
 
-
+//update the startegy
 
 export const updateStrategy = async (id, updatedData) => {
   try {

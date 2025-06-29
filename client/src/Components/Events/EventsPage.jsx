@@ -42,7 +42,7 @@ const EventsPage = () => {
     } finally {
       setLoading(false);
     }
-}, [addToast]);
+  }, [addToast]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -96,14 +96,14 @@ const EventsPage = () => {
   }
 
   return (
-    <div className="p-4 max-w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-white">Events</h2>
+    <div className="p-2 sm:p-4 max-w-6xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-white">Events</h2>
         <button
           onClick={handleAddEvent}
-          className="bg-[#27c284] text-white px-4 py-2 rounded hover:bg-green-600 transition-colors flex items-center gap-2 cursor-pointer"
+          className="bg-[#27c284] text-white px-3 py-1 sm:px-4 sm:py-2 rounded hover:bg-green-600 transition-colors flex items-center gap-2 cursor-pointer text-sm sm:text-base w-full sm:w-auto justify-center"
         >
-          <FaPlus size={16} /> Add Event
+          <FaPlus size={14} /> <span>Add Event</span>
         </button>
       </div>
 
@@ -113,7 +113,8 @@ const EventsPage = () => {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-gray-700">
-          <table className="min-w-full bg-gray-800 text-white">
+          {/* Desktop Table */}
+          <table className="hidden sm:table min-w-full bg-gray-800 text-white">
             <thead className="bg-gray-700">
               <tr>
                 <th className="py-3 px-4 text-left">Name</th>
@@ -159,6 +160,47 @@ const EventsPage = () => {
               ))}
             </tbody>
           </table>
+
+          {/* Mobile Cards */}
+          <div className="sm:hidden space-y-3 p-2">
+            {events.map((event) => (
+              <div key={event._id} className="bg-gray-750 p-3 rounded-lg border border-gray-700">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium text-white">{event.name}</h3>
+                    <p className="text-gray-400 text-sm mt-1">
+                      {new Date(event.date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleEditEvent(event._id)}
+                      className="text-blue-400 hover:text-blue-300 transition-colors p-1"
+                      title="Edit"
+                      aria-label="Edit event"
+                    >
+                      <FaEdit size={14} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEventToDelete(event._id);
+                        setShowDeleteModal(true);
+                      }}
+                      className="text-red-500 hover:text-red-400 transition-colors p-1"
+                      title="Delete"
+                      aria-label="Delete event"
+                    >
+                      <FaTrash size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

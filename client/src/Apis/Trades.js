@@ -76,6 +76,8 @@ export const fetchAllTrades = async () => {
   }
 };
 
+//Fetch trade By Date
+
 export const fetchTradesByDate = async (startDate, endDate) => {
   try {
     const res = await axios.get(`${BASE_URL}/trades`, {
