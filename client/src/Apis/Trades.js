@@ -31,6 +31,7 @@ export const fetchTradeById = async (id) => {
   try {
     const res = await axios.get(`${BASE_URL}/trades/${id}`);
     return res.data;
+
   } catch (error) {
     return { success: false, message: "Error fetching trade" };
   }

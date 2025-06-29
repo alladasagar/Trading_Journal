@@ -209,6 +209,48 @@ const TradeForm = ({ isEdit = false }) => {
     setForm(prev => ({ ...prev, [field]: updated }));
   };
 
+  const compressImage = (file, maxWidth = 800, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        image.src = e.target.result;
+      };
+
+      image.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scaleFactor = maxWidth / image.width;
+        const width = maxWidth;
+        const height = image.height * scaleFactor;
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            const compressedFile = new File([blob], file.name, {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+            resolve(compressedFile);
+          },
+          "image/jpeg",
+          quality // 0.0 to 1.0
+        );
+      };
+
+      reader.onerror = reject;
+      image.onerror = reject;
+
+      reader.readAsDataURL(file);
+    });
+  };
+
+
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
@@ -230,9 +272,10 @@ const TradeForm = ({ isEdit = false }) => {
     setIsUploading(true);
 
     try {
-      const uploadPromises = files.map(file => {
+      const uploadPromises = files.map(async (file) => {
+        const compressed = await compressImage(file); 
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", compressed);
         formData.append("upload_preset", "Trading_Journal");
 
         return fetch("https://api.cloudinary.com/v1_1/dmtzqbef2/image/upload", {
@@ -240,6 +283,7 @@ const TradeForm = ({ isEdit = false }) => {
           body: formData,
         }).then(response => response.json());
       });
+
 
       const results = await Promise.all(uploadPromises);
       const successfulUploads = results.filter(result => result.secure_url);
@@ -280,6 +324,7 @@ const TradeForm = ({ isEdit = false }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const tradeData = {
@@ -723,7 +768,7 @@ const TradeForm = ({ isEdit = false }) => {
           <button
             type="submit"
             disabled={isUploading}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg w-full md:w-1/2 transition duration-200"
+            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg w-full md:w-1/2 transition duration-200 cursor-pointer"
           >
             {isUploading ? (
               <span className="flex items-center justify-center">
@@ -753,7 +798,7 @@ const TradeForm = ({ isEdit = false }) => {
               isEdit ? "Update Trade" : "Save Trade"
             )}
           </button>
-        </div>
+        </div> 
       </form>
     </div>
   );

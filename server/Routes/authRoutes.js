@@ -1,11 +1,11 @@
 // authRoutes.js
 import express from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken"; // ✅ JWT
+import jwt from "jsonwebtoken"; 
 import User from "../Models/User.js";
 
 const router = express.Router();
-const JWT_SECRET = "your_jwt_secret"; // Replace with your secure secret or use env var
+
 
 router.post("/login", async (req, res) => {
   console.log("Backend reached data:", req.body);
@@ -21,15 +21,13 @@ router.post("/login", async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid password" });
     }
-
-    // Create JWT payload
     const payload = {
       userId: user._id,
       email: user.email,
     };
 
     // Sign token
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "2h" });
+    const token = jwt.sign(payload,process.env.JWT_SECRET, { expiresIn: "2h" });
 
     return res.status(200).json({ message: "Login successful", token });
   } catch (error) {

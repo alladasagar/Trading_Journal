@@ -18,14 +18,13 @@ const EventForm = ({ isEdit = false }) => {
   const { addToast } = useToast();
 
   // Load event data if editing
-  // Load event data if editing
   useEffect(() => {
     if (isEdit && eventId) {
       const loadEvent = async () => {
         setLoading(true);
         try {
           const res = await fetchEventById(eventId);
-          console.log('Event data:', res); // Debug log
+          console.log('Event data:', res);
           
           if (res.success && res.event) {
             setForm({
@@ -96,24 +95,27 @@ const EventForm = ({ isEdit = false }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-gray-800 text-white rounded-lg shadow-lg">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-md mx-auto p-4 sm:p-6 bg-gray-800 text-white rounded-lg shadow-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center text-gray-300 hover:text-white transition-colors cursor-pointer"
+          className="flex items-center text-gray-300 hover:text-white transition-colors cursor-pointer w-max"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
           </svg>
           Back
         </button>
-        <h2 className="text-2xl font-bold text-[#27c284]">
+        
+        <h2 className="text-xl sm:text-2xl font-bold text-[#27c284] text-center">
           {isEdit ? "Edit Event" : "Create Event"}
         </h2>
-        <div className="w-10"></div>
+        
+        {/* Spacer for alignment */}
+        <div className="hidden sm:block w-10"></div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-300">Event Name *</label>
           <input
@@ -121,7 +123,7 @@ const EventForm = ({ isEdit = false }) => {
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-md bg-gray-700 border border-gray-600 focus:border-[#27c284] focus:ring-1 focus:ring-[#27c284] outline-none transition"
+            className="w-full px-3 py-2 sm:px-4 sm:py-2 rounded-md bg-gray-700 border border-gray-600 focus:border-[#27c284] focus:ring-1 focus:ring-[#27c284] outline-none transition text-sm sm:text-base"
             placeholder="Enter event name"
             required
             disabled={loading}
@@ -135,17 +137,17 @@ const EventForm = ({ isEdit = false }) => {
             name="date"
             value={form.date}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-md bg-gray-700 border border-gray-600 focus:border-[#27c284] focus:ring-1 focus:ring-[#27c284] outline-none transition"
+            className="w-full px-3 py-2 sm:px-4 sm:py-2 rounded-md bg-gray-700 border border-gray-600 focus:border-[#27c284] focus:ring-1 focus:ring-[#27c284] outline-none transition text-sm sm:text-base"
             required
             disabled={loading}
           />
         </div>
 
-        <div className="pt-4">
+        <div className="pt-2 sm:pt-4">
           <button
             type="submit"
             disabled={loading || formLoading}
-            className="w-full bg-[#27c284] hover:bg-[#1fa769] text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer"
+            className="w-full bg-[#27c284] hover:bg-[#1fa769] text-white font-medium py-2 px-4 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center cursor-pointer text-sm sm:text-base"
           >
             {formLoading ? (
               <>

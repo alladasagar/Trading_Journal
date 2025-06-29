@@ -25,20 +25,20 @@ router.get('/events/:id', async (req, res) => {
       return res.status(404).json({ 
         success: false, 
         message: 'Event not found',
-        data: null  // Explicitly set data to null when not found
+        data: null  
       });
     }
     res.json({ 
       success: true, 
       message: 'Event fetched successfully',
-      data: event  // Consistent data property
+      data: event  
     });
   } catch (error) {
     console.error('Error fetching event:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to fetch event',
-      data: null  // Explicitly set data to null on error
+      data: null  
     });
   }
 });
