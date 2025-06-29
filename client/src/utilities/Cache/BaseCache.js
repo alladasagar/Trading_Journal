@@ -1,6 +1,6 @@
 // src/utils/BaseCache.js
 export class BaseCache {
-  constructor(cacheDuration = 5 * 60 * 1000, autoInvalidateInterval = 4 * 60 * 1000) {
+  constructor(cacheDuration = 10 * 60 * 1000, autoInvalidateInterval = 9 * 60 * 1000) {
     this.cache = {
       data: null,
       timestamp: null

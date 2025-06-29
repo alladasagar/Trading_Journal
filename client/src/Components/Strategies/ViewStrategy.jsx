@@ -28,6 +28,7 @@ const ViewStrategy = () => {
       try {
         setLoading(true);
         const strategyRes = await getStrategyById(id);
+        console.log(strategyRes);
 
         if (strategyRes.success) {
           setStrategy(strategyRes.data);

@@ -20,41 +20,32 @@ const AddStrategy = () => {
   const isEdit = Boolean(id);
 
   useEffect(() => {
-    if (isEdit) {
-      (async () => {
-        setLoading(true);
-        
-        // Check cache first for this specific strategy
-        const cachedStrategies = strategyCache.get().data;
-        if (cachedStrategies) {
-          const cachedStrategy = cachedStrategies.find(s => s._id === id);
-          if (cachedStrategy) {
-            setStrategyName(cachedStrategy.name || "");
-            setEntryRules(cachedStrategy.entry_rules || []);
-            setExitRules(cachedStrategy.exit_rules || []);
-            setLoading(false);
-            return;
-          }
-        }
+  if (isEdit) {
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await getStrategyById(id);
+        console.log("Fetched from API:", res);
 
-        try {
-          const res = await getStrategyById(id);
-          if (res.success) {
-            const data = res.data;
-            setStrategyName(data.name || "");
-            setEntryRules(data.entry_rules || []);
-            setExitRules(data.exit_rules || []);
-          } else {
-            addToast("Failed to fetch strategy", "error");
-          }
-        } catch {
+        if (res.success) {
+          const data = res.data;
+          setStrategyName(data.name || "");
+          setEntryRules(data.entry_rules || []);
+          setExitRules(data.exit_rules || []);
+        } else {
           addToast("Failed to fetch strategy", "error");
-        } finally {
-          setLoading(false);
         }
-      })();
-    }
-  }, [id]);
+      } catch (err) {
+        console.error("Error fetching strategy", err);
+        addToast("Failed to fetch strategy", "error");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }
+}, [id]);
+
+
 
   const handleAddRule = (type) => {
     if (type === "entry" && newEntryRule.trim()) {
