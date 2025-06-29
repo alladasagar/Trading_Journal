@@ -225,8 +225,10 @@ router.get("/trades/:id", async (req, res) => {
   const { id } = req.params;
 
   try {
-    console.log("Request recievd to backend with trade id:", id, "id")
-    const trade = await Trade.findById(id).populate("strategyId");
+    console.log("Request received to backend with trade id:", id);
+
+    const trade = await Trade.findById(id)
+      .populate("strategyId", "name"); // Only fetch strategy name
 
     if (!trade) {
       return res.status(404).json({ success: false, message: "Trade not found" });
@@ -245,6 +247,7 @@ router.get("/trades/:id", async (req, res) => {
     });
   }
 });
+
 
 
 router.get("/trades", async (req, res) => {

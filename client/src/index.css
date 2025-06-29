@@ -1,1 +1,4 @@
 @import "tailwindcss";
+.react-tooltip {
+  white-space: pre-line;
+}

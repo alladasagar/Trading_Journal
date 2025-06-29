@@ -21,11 +21,13 @@ const TradesPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tradeToDelete, setTradeToDelete] = useState(null);
 
+
+
   useEffect(() => {
     const loadTrades = async () => {
       setLoading(true);
       const result = await fetchTradesByStrategy(id);
-      console.log("Trdes:",result);
+      console.log("Trdes:", result);
       if (result.success) {
         setTrades(result.trades);
       } else {
@@ -79,7 +81,7 @@ const TradesPage = () => {
       </div>
     );
   }
-  console.log("Trades data:", trades.map(t => ({id: t._id, notes: t.notes})));
+  console.log("Trades data:", trades.map(t => ({ id: t._id, notes: t.notes })));
 
   return (
     <div className="p-4 bg-gray-900 min-h-screen">
@@ -191,7 +193,6 @@ const TradesPage = () => {
                     </td>
                     <td className="px-4 py-4 text-sm text-gray-300 sm:px-6">
                       {trade.note ? (
-                        
                         <>
                           <div
                             data-tooltip-id={`note-tooltip-${trade._id}`}

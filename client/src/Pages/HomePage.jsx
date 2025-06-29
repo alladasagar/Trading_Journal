@@ -169,8 +169,6 @@ const HomePage = () => {
 
     loadTrades();
   }, [dateRange]);
-
-  // Load calendar trades
   const loadCalendarTrades = async (month) => {
     const startDate = month.startOf('month').format("YYYY-MM-DD");
     const endDate = month.endOf('month').format("YYYY-MM-DD");
@@ -186,7 +184,6 @@ const HomePage = () => {
     }
   };
 
-  // Generate calendar data with CalendarCache
   const generateCalendarData = async () => {
     const monthKey = currentMonth.format('YYYY-MM');
 
@@ -220,7 +217,6 @@ const HomePage = () => {
     const calendarData = [];
     let currentWeek = [];
 
-    // Previous month days
     for (let i = 0; i < daysFromPrevMonth; i++) {
       const date = startOfMonth.subtract(daysFromPrevMonth - i, 'day');
       currentWeek.push({
@@ -232,7 +228,7 @@ const HomePage = () => {
       });
     }
 
-    // Current month days
+
     for (let i = 1; i <= daysInMonth; i++) {
       const date = startOfMonth.date(i);
       const dateStr = date.format("YYYY-MM-DD");
@@ -252,7 +248,6 @@ const HomePage = () => {
       }
     }
 
-    // Next month days
     for (let i = 1; i <= daysFromNextMonth; i++) {
       const date = endOfMonth.add(i, 'day');
       currentWeek.push({
