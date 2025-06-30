@@ -98,38 +98,45 @@ const HomePage = () => {
 
   // Load events with cache
   useEffect(() => {
-    const loadEvents = async () => {
+  const loadEvents = async () => {
+    try {
+      // Check if valid cache exists
       if (eventsCache.isValid()) {
-        const cachedEvents = eventsCache.get().data;
+        const cached = eventsCache.get();
+        const cachedEvents = Array.isArray(cached?.data) ? cached.data : [];
         filterTodaysEvents(cachedEvents);
         return;
       }
 
+      // Fetch from API if no valid cache
       setIsLoading(prev => ({ ...prev, events: true }));
-      try {
-        const result = await fetchEvents();
-        if (result.success) {
-          eventsCache.set(result.events);
-          filterTodaysEvents(result.events);
-        }
-      } catch (error) {
-        console.log("Error loading events:", error);
-      } finally {
-        setIsLoading(prev => ({ ...prev, events: false }));
+      const result = await fetchEvents();
+      if (result.success) {
+        const fetchedEvents = Array.isArray(result.events) ? result.events : [];
+        eventsCache.set(fetchedEvents);
+        filterTodaysEvents(fetchedEvents);
+      } else {
+        setEvents([]);
       }
-    };
+    } catch (error) {
+      console.error("Error loading events:", error);
+      setEvents([]); 
+    } finally {
+      setIsLoading(prev => ({ ...prev, events: false }));
+    }
+  };
 
-    const filterTodaysEvents = (allEvents) => {
-      const today = dayjs().format('YYYY-MM-DD');
-      const todaysEvents = (allEvents || []).filter(event =>
-        dayjs(event.date).format('YYYY-MM-DD') === today
-      );
-      setEvents(todaysEvents);
-    };
+  const filterTodaysEvents = (allEvents = []) => {
+    const today = dayjs().format('YYYY-MM-DD');
+    const todaysEvents = allEvents.filter(event =>
+      dayjs(event.date).format('YYYY-MM-DD') === today
+    );
+    setEvents(todaysEvents);
+  };
 
+  loadEvents();
+}, []);
 
-    loadEvents();
-  }, []);
 
   // Load trades with GraphCache
   useEffect(() => {
