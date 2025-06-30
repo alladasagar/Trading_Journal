@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const EventSchema = new mongoose.Schema({
+  
   name: {
     type: String,
     required: true,
@@ -11,5 +12,8 @@ const EventSchema = new mongoose.Schema({
     required: true
   }
 });
+
+//Indexing date to fetch quickly
+EventSchema.index({ date: 1 });
 
 export default mongoose.model('Event', EventSchema);

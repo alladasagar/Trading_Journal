@@ -97,4 +97,10 @@ const tradeSchema = new mongoose.Schema({
   }
 });
 
+tradeSchema.index({ strategyId: 1 });          
+tradeSchema.index({ entry_date: 1 });           
+tradeSchema.index({ strategyId: 1, entry_date: 1 }); 
+tradeSchema.index({ createdAt: -1 });           
+tradeSchema.index({ day: 1 });  
+
 export default mongoose.model("Trade", tradeSchema);

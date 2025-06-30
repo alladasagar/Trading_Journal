@@ -21,4 +21,7 @@ const premarketSchema = new mongoose.Schema({
   timestamps: true, // adds createdAt and updatedAt fields
 });
 
+premarketSchema.index({ createdAt: -1 }); 
+premarketSchema.index({ date: 1 });     
+premarketSchema.index({ day: 1 }); 
 export default mongoose.model("Premarket",premarketSchema)

@@ -7,5 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, minlength: 6 },
 }, { timestamps: true });
 
+userSchema.index({ name: 1});
+
 const User = mongoose.model("User", userSchema);
 export default User;

@@ -13,4 +13,9 @@ const strategySchema = new mongoose.Schema({
   created_at: { type: Date, default: Date.now }
 });
 
+strategySchema.index({ name: 1 });
+strategySchema.index({ net_pnl: -1 });
+strategySchema.index({ win_rate: -1 });
+strategySchema.index({ created_at: -1 });
+
 export default mongoose.model('Strategy', strategySchema);
