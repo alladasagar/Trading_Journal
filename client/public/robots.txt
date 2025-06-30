@@ -1,0 +1,5 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://trading-journal-pi.vercel.app/sitemap.xml
+
