@@ -1,4 +1,4 @@
-import React, { useState , lazy } from "react";
+import React, { useState, lazy } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import ConfirmModal from "./ui/ConfirmModal";
 import { useToast } from "./context/ToastContext";
@@ -29,6 +29,7 @@ const Navbar = () => {
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="text-[#27c284] focus:outline-none"
+          aria-label={isMobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {isMobileMenuOpen ? (
@@ -38,9 +39,10 @@ const Navbar = () => {
             )}
           </svg>
         </button>
+
       </div>
 
-      {/* Sidebar - hidden on mobile unless menu is open */}
+
       <div
         className={`${isMobileMenuOpen ? 'block' : 'hidden'} md:block w-full md:w-64 bg-black text-white p-4`}
       >
