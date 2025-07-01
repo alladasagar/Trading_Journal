@@ -82,15 +82,22 @@ const ViewStrategy = () => {
     const data = payload[0].payload;
     return (
       <div className="bg-gray-800 border border-gray-700 p-2 sm:p-3 rounded shadow-lg text-xs sm:text-sm">
-        <p className="font-bold text-[#27c284]">{data.name} ({data.side})</p>
-        <p className="text-gray-300">{data.date}</p>
-        <p className={data.pnl >= 0 ? "text-green-400" : "text-red-400"}>
-          <span className="font-bold">PNL:</span> ₹{data.pnl.toFixed(2)}
+        <p className="font-bold text-[#27c284]">
+          {data?.name ?? "Unknown"} ({data?.side ?? "N/A"})
         </p>
-        <p className={data.roi >= 0 ? "text-green-400" : "text-red-400"}>
-          <span className="font-bold">ROI:</span> {data.roi.toFixed(2)}%
+        <p className="text-gray-300">{data?.date ?? "Date not available"}</p>
+
+        <p className={(Number(data?.pnl) ?? 0) >= 0 ? "text-green-400" : "text-red-400"}>
+          <span className="font-bold">PNL:</span> ₹
+          {typeof data?.pnl === 'number' ? data.pnl.toFixed(2) : "0.00"}
+        </p>
+
+        <p className={(Number(data?.roi) ?? 0) >= 0 ? "text-green-400" : "text-red-400"}>
+          <span className="font-bold">ROI:</span>
+          {typeof data?.roi === 'number' ? data.roi.toFixed(2) : "0.00"}%
         </p>
       </div>
+
     );
   };
 

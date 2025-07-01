@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { fetchTradesByDate } from "../Apis/Trades";
+import { fetchEvents } from "../Apis/Events";
 import { graphCache } from "../utilities/Cache/GraphCache";
 import { calendarCache } from "../utilities/Cache/CalendarCache";
 import { eventsCache } from "../utilities/Cache/EventCache";
