@@ -382,7 +382,7 @@ const HomePage = () => {
           </div>
         )}
       </div>
-      {/* Date Range Filter */}More actions
+      {/* Date Range Filter */}
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg sm:text-xl font-medium text-[#27c284]">
