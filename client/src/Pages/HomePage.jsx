@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { fetchEvents } from "../Apis/Events";
 import { fetchTradesByDate } from "../Apis/Trades";
-import { eventsCache } from "../utilities/Cache/EventCache";
 import { graphCache } from "../utilities/Cache/GraphCache";
 import { calendarCache } from "../utilities/Cache/CalendarCache";
+import { eventsCache } from "../utilities/Cache/EventCache";
 import Loader from "../Components/ui/Loader";
 import dayjs from "dayjs";
-import { FaChartLine, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaChartLine, FaChevronLeft, FaChevronRight ,FaCalendarAlt } from "react-icons/fa";
 import { SiZerodha, SiTradingview } from "react-icons/si";
 import { MdShowChart } from "react-icons/md";
 import { TbBulb } from "react-icons/tb";
@@ -22,13 +21,13 @@ import {
 } from "recharts";
 
 const HomePage = () => {
-  const [events, setEvents] = useState([]);
   const [trades, setTrades] = useState([]);
   const [pnlData, setPnlData] = useState([]);
   const [isLoading, setIsLoading] = useState({
-    events: false,
     trades: false
   });
+  const [todaysEvents, setTodaysEvents] = useState([]);
+const [loadingEvents, setLoadingEvents] = useState(false);
 
   const [currentMonth, setCurrentMonth] = useState(dayjs());
   const [dateRange, setDateRange] = useState({
@@ -43,7 +42,43 @@ const HomePage = () => {
     });
   };
 
-  // Custom Tooltip Component (moved to top)
+  useEffect(() => {
+  const loadTodaysEvents = async () => {
+    try {
+      setLoadingEvents(true);
+      let events = [];
+      
+      // Check cache first
+      if (eventsCache.isValid()) {
+        events = eventsCache.get().data || [];
+      } else {
+        // If no cache, fetch fresh data
+        const result = await fetchEvents();
+        if (result.success) {
+          events = result.data || [];
+          eventsCache.set(events);
+        }
+      }
+
+      // Filter today's events
+      const today = dayjs().format('YYYY-MM-DD');
+      const filteredEvents = events.filter(event => 
+        dayjs(event.date).format('YYYY-MM-DD') === today
+      );
+      
+      setTodaysEvents(filteredEvents);
+    } catch (error) {
+      console.error("Error loading today's events:", error);
+      setTodaysEvents([]);
+    } finally {
+      setLoadingEvents(false);
+    }
+  };
+
+  loadTodaysEvents();
+}, []);
+
+  // Custom Tooltip Component
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       const pnlValue = payload[0].value;
@@ -96,48 +131,6 @@ const HomePage = () => {
     }));
   };
 
-  // Load events with cache
-  useEffect(() => {
-  const loadEvents = async () => {
-    try {
-      // Check if valid cache exists
-      if (eventsCache.isValid()) {
-        const cached = eventsCache.get();
-        const cachedEvents = Array.isArray(cached?.data) ? cached.data : [];
-        filterTodaysEvents(cachedEvents);
-        return;
-      }
-
-      // Fetch from API if no valid cache
-      setIsLoading(prev => ({ ...prev, events: true }));
-      const result = await fetchEvents();
-      if (result.success) {
-        const fetchedEvents = Array.isArray(result.events) ? result.events : [];
-        eventsCache.set(fetchedEvents);
-        filterTodaysEvents(fetchedEvents);
-      } else {
-        setEvents([]);
-      }
-    } catch (error) {
-      console.error("Error loading events:", error);
-      setEvents([]); 
-    } finally {
-      setIsLoading(prev => ({ ...prev, events: false }));
-    }
-  };
-
-  const filterTodaysEvents = (allEvents = []) => {
-    const today = dayjs().format('YYYY-MM-DD');
-    const todaysEvents = allEvents.filter(event =>
-      dayjs(event.date).format('YYYY-MM-DD') === today
-    );
-    setEvents(todaysEvents);
-  };
-
-  loadEvents();
-}, []);
-
-
   // Load trades with GraphCache
   useEffect(() => {
     const loadTrades = async () => {
@@ -156,7 +149,6 @@ const HomePage = () => {
           dateRange.startDate,
           dateRange.endDate
         );
-        console.log(result);
         if (result.success) {
           const processedData = processPnlData(result.trades);
           setTrades(result.trades);
@@ -176,6 +168,7 @@ const HomePage = () => {
 
     loadTrades();
   }, [dateRange]);
+
   const loadCalendarTrades = async (month) => {
     const startDate = month.startOf('month').format("YYYY-MM-DD");
     const endDate = month.endOf('month').format("YYYY-MM-DD");
@@ -234,7 +227,6 @@ const HomePage = () => {
         isCurrentMonth: false
       });
     }
-
 
     for (let i = 1; i <= daysInMonth; i++) {
       const date = startOfMonth.date(i);
@@ -348,34 +340,52 @@ const HomePage = () => {
           </a>
         </div>
       </div>
-
-      {/* Events Marquee */}
-      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6">
-        <div className="p-4">
-          {isLoading.events ? (
-            <Loader />
-          ) : (
-            <div>
-              <h2 className="text-xl font-semibold text-[rgb(232,244,239)] mb-2 text-center">
-                Today's Events ({dayjs().format('MMMM D, YYYY')})
-              </h2>
-              <marquee className="h-8 flex items-center">
-                {events.length > 0 ? (
-                  events.map((e, index) => (
-                    <span key={index} className="text-[#27c284] mx-8 text-2xl flex items-center">
-                      {e.name} {e.time && `@ ${e.time}`}
-                    </span>
-                  ))
-                ) : (
-                  <span className="text-gray-400 mx-8 text-xl">
-                    No events scheduled for today
-                  </span>
+      {/* Today's Events Card */}
+{/* Today's Events Card */}
+<div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
+  <div className="flex items-center justify-between mb-3">
+    <h2 className="text-lg font-semibold text-[#27c284] flex items-center gap-2">
+      <FaCalendarAlt /> Today's Events ({dayjs().format('MMMM D, YYYY')})
+    </h2>
+  </div>
+  
+  {loadingEvents ? (
+    <div className="flex justify-center py-4">
+      <Loader size="small" />
+    </div>
+  ) : todaysEvents.length > 0 ? (
+    <div className="overflow-hidden">
+      <div className="animate-marquee whitespace-nowrap">
+        {todaysEvents.map((event, index) => (
+          <div 
+            key={index} 
+            className="inline-block bg-gray-750 p-3 rounded border border-gray-700 hover:bg-gray-700 transition-colors mx-2 w-64"
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-medium text-white truncate">{event.name}</h3>
+                {event.time && (
+                  <p className="text-sm text-gray-400 mt-1">
+                    Time: {event.time}
+                  </p>
                 )}
-              </marquee>
+              </div>
+              {event.important && (
+                <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded">
+                  Important
+                </span>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        ))}
       </div>
+    </div>
+  ) : (
+    <div className="text-center text-gray-400 py-4">
+      No events scheduled for today
+    </div>
+  )}
+</div>
 
       {/* Date Range Filter */}
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
