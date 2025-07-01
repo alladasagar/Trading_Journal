@@ -83,16 +83,15 @@ A modern and responsive web application to track and analyze trades. It helps tr
 ```
 src/
 ├── components/    # Reusable UI components 
-├── pages/         # Route-based pages (Home, AddTrade, etc.)
+├── pages/         # Route-based pages 
 ├── apis/          # API service functions
-├── utilities/     # Helper functions (e.g., cache)
+├── utilities/     # Helper functions
 └── ui/            # Custom UI elements and styling
 ```
 
 ### Backend (`server/`)
 ```
 server/
-├── controllers/   # Business logic for API routes
 ├── models/        # Mongoose schemas
 ├── routes/        # API route definitions
 ├── db.js          # MongoDB connection configuration
@@ -114,5 +113,5 @@ server/
 ## 👤 Developer
 
 **Sagar Allada**  
-Email: `sagar@example.com`  
-GitHub: [@sagarallada](https://github.com/sagarallada)
+Email: `sagar.allada26@gmail.com`  
+GitHub: https://github.com/sagarallada
