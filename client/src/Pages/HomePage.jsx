@@ -6,10 +6,10 @@ import { calendarCache } from "../utilities/Cache/CalendarCache";
 import { eventsCache } from "../utilities/Cache/EventCache";
 import Loader from "../Components/ui/Loader";
 import dayjs from "dayjs";
-import { FaChartLine, FaChevronLeft, FaChevronRight ,FaCalendarAlt } from "react-icons/fa";
+import { FaChartLine, FaChevronLeft, FaChevronRight, FaCalendarAlt } from "react-icons/fa";
 import { SiZerodha, SiTradingview } from "react-icons/si";
 import { MdShowChart } from "react-icons/md";
-import { TbBulb } from "react-icons/tb";
+import { TbBulb, TbMarquee } from "react-icons/tb";
 import {
   LineChart,
   Line,
@@ -28,7 +28,7 @@ const HomePage = () => {
     trades: false
   });
   const [todaysEvents, setTodaysEvents] = useState([]);
-const [loadingEvents, setLoadingEvents] = useState(false);
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   const [currentMonth, setCurrentMonth] = useState(dayjs());
   const [dateRange, setDateRange] = useState({
@@ -44,40 +44,40 @@ const [loadingEvents, setLoadingEvents] = useState(false);
   };
 
   useEffect(() => {
-  const loadTodaysEvents = async () => {
-    try {
-      setLoadingEvents(true);
-      let events = [];
-      
-      // Check cache first
-      if (eventsCache.isValid()) {
-        events = eventsCache.get().data || [];
-      } else {
-        // If no cache, fetch fresh data
-        const result = await fetchEvents();
-        if (result.success) {
-          events = result.data || [];
-          eventsCache.set(events);
+    const loadTodaysEvents = async () => {
+      try {
+        setLoadingEvents(true);
+        let events = [];
+
+        // Check cache first
+        if (eventsCache.isValid()) {
+          events = eventsCache.get().data || [];
+        } else {
+          // If no cache, fetch fresh data
+          const result = await fetchEvents();
+          if (result.success) {
+            events = result.data || [];
+            eventsCache.set(events);
+          }
         }
+
+        // Filter today's events
+        const today = dayjs().format('YYYY-MM-DD');
+        const filteredEvents = events.filter(event =>
+          dayjs(event.date).format('YYYY-MM-DD') === today
+        );
+
+        setTodaysEvents(filteredEvents);
+      } catch (error) {
+        console.error("Error loading today's events:", error);
+        setTodaysEvents([]);
+      } finally {
+        setLoadingEvents(false);
       }
+    };
 
-      // Filter today's events
-      const today = dayjs().format('YYYY-MM-DD');
-      const filteredEvents = events.filter(event => 
-        dayjs(event.date).format('YYYY-MM-DD') === today
-      );
-      
-      setTodaysEvents(filteredEvents);
-    } catch (error) {
-      console.error("Error loading today's events:", error);
-      setTodaysEvents([]);
-    } finally {
-      setLoadingEvents(false);
-    }
-  };
-
-  loadTodaysEvents();
-}, []);
+    loadTodaysEvents();
+  }, []);
 
   // Custom Tooltip Component
   const CustomTooltip = ({ active, payload, label }) => {
@@ -342,94 +342,45 @@ const [loadingEvents, setLoadingEvents] = useState(false);
         </div>
       </div>
       {/* Today's Events Card */}
-{/* Today's Events Card */}
-<div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
-  <div className="flex items-center justify-between mb-3">
-    <h2 className="text-lg font-semibold text-[#27c284] flex items-center gap-2">
-      <FaCalendarAlt /> Today's Events ({dayjs().format('MMMM D, YYYY')})
-    </h2>
-  </div>
-  
-  {loadingEvents ? (
-    <div className="flex justify-center py-4">
-      <Loader size="small" />
-    </div>
-  ) : todaysEvents.length > 0 ? (
-    <div className="overflow-hidden">
-      <div className="animate-marquee whitespace-nowrap">
-        {todaysEvents.map((event, index) => (
-          <div 
-            key={index} 
-            className="inline-block bg-gray-750 p-3 rounded border border-gray-700 hover:bg-gray-700 transition-colors mx-2 w-64"
-          >
-            <div className="flex justify-between items-center">
-              <div>
-                <h3 className="font-medium text-white truncate">{event.name}</h3>
-                {event.time && (
-                  <p className="text-sm text-gray-400 mt-1">
-                    Time: {event.time}
-                  </p>
-                )}
-              </div>
-              {event.important && (
-                <span className="bg-yellow-500/20 text-yellow-400 text-xs px-2 py-1 rounded">
-                  Important
-                </span>
-              )}
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
+        <div className="flex items-center justify-center mb-3">
+          <h2 className="text-lg font-semibold text-[#27c284] flex items-center gap-2">
+            <FaCalendarAlt /> Today's Events ({dayjs().format('MMMM D, YYYY')})
+          </h2>
+        </div>
+
+        {loadingEvents ? (
+          <div className="flex justify-center py-4">
+            <Loader size="small" />
+          </div>
+        ) : todaysEvents.length > 0 ? (
+          <div className="overflow-hidden relative">
+            <div className="flex whitespace-nowrap animate-[marquee_20s_linear_infinite] hover:animation-paused">
+              {todaysEvents.map((event, index) => (
+                <div
+                  key={index}
+                  className="inline-flex bg-gray-750 p-3 rounded border border-gray-700 hover:bg-gray-700 transition-colors mx-2 w-full flex-shrink-0"
+                >
+                  <div className="flex justify-center items-center w-full">
+                    <div>
+                      <h3 className="font-medium text-white truncate ">{event.name}</h3>
+                      {event.time && (
+                        <p className="text-sm text-gray-400 mt-1">
+                          Time: {event.time}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
-    </div>
-  ) : (
-    <div className="text-center text-gray-400 py-4">
-      No events scheduled for today
-    </div>
-  )}
-</div>
 
-      {/* Date Range Filter */}
-      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg sm:text-xl font-medium text-[#27c284]">
-            Date Range Filter
-          </h3>
-          <button
-            onClick={handleClearDates}
-            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-[#27c284] rounded-md text-sm transition-colors"
-          >
-            Clear Dates
-          </button>
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-gray-300 mb-1 text-sm font-medium">
-              Start Date:
-            </label>
-            <input
-              type="date"
-              name="startDate"
-              value={dateRange.startDate}
-              onChange={handleDateChange}
-              max={dateRange.endDate}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
-            />
+        ) : (
+          <div className="text-center text-gray-400 py-4">
+            No events scheduled for today
           </div>
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-gray-300 mb-1 text-sm font-medium">
-              End Date:
-            </label>
-            <input
-              type="date"
-              name="endDate"
-              value={dateRange.endDate}
-              onChange={handleDateChange}
-              min={dateRange.startDate}
-              max={dayjs().format("YYYY-MM-DD")}
-              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
-            />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* PNL Line Chart */}
