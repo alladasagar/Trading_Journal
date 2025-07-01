@@ -83,7 +83,7 @@ const TradeForm = ({ isEdit = false }) => {
             exit: trade.exit != null ? trade.exit.toString() : "",
             stop_loss: trade.stop_loss != null ? trade.stop_loss.toString() : "",
             shares: trade.shares != null ? trade.shares.toString() : "",
-            charges: trade.charges != null ? trade.charges.toString() : "",
+            charges: trade.charges != null ? trade.charges.toString() : "0",
             entry_date: entryDate,
             exit_date: exitDate,
             target: trade.target != null ? trade.target.toString() : "",
@@ -239,7 +239,7 @@ const TradeForm = ({ isEdit = false }) => {
             resolve(compressedFile);
           },
           "image/jpeg",
-          quality // 0.0 to 1.0
+          quality
         );
       };
 
@@ -249,7 +249,6 @@ const TradeForm = ({ isEdit = false }) => {
       reader.readAsDataURL(file);
     });
   };
-
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
@@ -283,7 +282,6 @@ const TradeForm = ({ isEdit = false }) => {
           body: formData,
         }).then(response => response.json());
       });
-
 
       const results = await Promise.all(uploadPromises);
       const successfulUploads = results.filter(result => result.secure_url);
@@ -335,7 +333,7 @@ const TradeForm = ({ isEdit = false }) => {
         exit: form.exit ? parseFloat(form.exit) : null,
         stop_loss: form.stop_loss ? parseFloat(form.stop_loss) : null,
         shares: form.shares ? parseFloat(form.shares) : null,
-        charges: form.charges ? parseFloat(form.charges) : null,
+        charges: form.charges ? parseFloat(form.charges) : 0, // Default to 0 if empty
         target: form.target ? parseFloat(form.target) : null,
         mistakes: form.mistakes.filter((m) => m !== ""),
         emojis: form.emojis,
@@ -364,6 +362,8 @@ const TradeForm = ({ isEdit = false }) => {
     } catch (error) {
       console.error("Trade submission error:", error);
       addToast(`An error occurred while ${isEdit ? "updating" : "saving"} the trade`, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -372,12 +372,12 @@ const TradeForm = ({ isEdit = false }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-900 rounded-lg shadow-lg text-white">
-      <h2 className="text-3xl font-bold text-emerald-400 mb-6 text-center">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 bg-gray-900 rounded-lg shadow-lg text-white">
+      <h2 className="text-2xl sm:text-3xl font-bold text-emerald-400 mb-4 sm:mb-6 text-center">
         {isEdit ? "Edit Trade" : "Add Trade"}
       </h2>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {/* Trade Name */}
         <div className="col-span-1">
           <label className="block text-sm font-medium mb-1">Trade Name</label>
@@ -386,7 +386,7 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.name}
             onChange={handleChange}
             placeholder="My Awesome Trade"
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -408,7 +408,7 @@ const TradeForm = ({ isEdit = false }) => {
             name="side"
             value={form.side}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           >
             <option value="Short">Short</option>
             <option value="Long">Long</option>
@@ -416,7 +416,7 @@ const TradeForm = ({ isEdit = false }) => {
         </div>
 
         {/* Entry Rules */}
-        <div className="col-span-2 bg-gray-800 p-4 rounded-lg">
+        <div className="col-span-2 bg-gray-800 p-3 sm:p-4 rounded-lg">
           <h3 className="text-lg font-semibold mb-2 text-emerald-400">Entry Rules</h3>
           {strategy.entry_rules.length > 0 ? (
             <ul className="space-y-2">
@@ -446,7 +446,7 @@ const TradeForm = ({ isEdit = false }) => {
         </div>
 
         {/* Exit Rules */}
-        <div className="col-span-2 bg-gray-800 p-4 rounded-lg">
+        <div className="col-span-2 bg-gray-800 p-3 sm:p-4 rounded-lg">
           <h3 className="text-lg font-semibold mb-2 text-emerald-400">Exit Rules</h3>
           {strategy.exit_rules.length > 0 ? (
             <ul className="space-y-2">
@@ -485,7 +485,7 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.entry}
             onChange={handleChange}
             placeholder="100.50"
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -499,7 +499,7 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.exit}
             onChange={handleChange}
             placeholder="105.75"
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -513,7 +513,7 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.stop_loss}
             onChange={handleChange}
             placeholder="95.25"
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -526,7 +526,7 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.shares}
             onChange={handleChange}
             placeholder="100"
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -540,7 +540,7 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.charges}
             onChange={handleChange}
             placeholder="20.50"
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -554,7 +554,7 @@ const TradeForm = ({ isEdit = false }) => {
             value={form.target}
             onChange={handleChange}
             placeholder="110.00"
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -566,7 +566,7 @@ const TradeForm = ({ isEdit = false }) => {
             name="entry_date"
             value={form.entry_date}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -578,7 +578,7 @@ const TradeForm = ({ isEdit = false }) => {
             name="exit_date"
             value={form.exit_date}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -590,7 +590,7 @@ const TradeForm = ({ isEdit = false }) => {
             name="time"
             value={form.time}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -615,7 +615,7 @@ const TradeForm = ({ isEdit = false }) => {
             onChange={handleChange}
             placeholder="Any additional notes about the trade..."
             rows="3"
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
         </div>
 
@@ -624,13 +624,19 @@ const TradeForm = ({ isEdit = false }) => {
           <label className="block text-sm font-medium mb-1">Screenshots</label>
           <div className="flex flex-col gap-4">
             <label>
-              <div className="bg-gray-800 border border-gray-700 rounded p-4 text-center cursor-pointer hover:bg-gray-700 transition">
+              <div className="bg-gray-800 border border-gray-700 rounded p-3 sm:p-4 text-center cursor-pointer hover:bg-gray-700 transition">
                 {isUploading ? (
-                  "Uploading..."
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Uploading...
+                  </span>
                 ) : (
                   <>
                     <span className="text-emerald-400">Choose Files</span>
-                    <span className="text-gray-400 text-sm block mt-1">
+                    <span className="text-gray-400 text-xs sm:text-sm block mt-1">
                       {form.screenshots.length > 0
                         ? "Add more images"
                         : "JPEG, PNG (max 5MB each, multiple allowed)"}
@@ -649,18 +655,18 @@ const TradeForm = ({ isEdit = false }) => {
             </label>
 
             {form.screenshots.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 {form.screenshots.map((url, index) => (
                   <div key={index} className="relative group">
                     <img
                       src={url}
                       alt={`Screenshot ${index + 1}`}
-                      className="w-full h-32 object-contain border border-gray-700 rounded"
+                      className="w-full h-24 sm:h-32 object-contain border border-gray-700 rounded"
                     />
                     <button
                       type="button"
                       onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                       title="Remove image"
                     >
                       ×
@@ -681,13 +687,13 @@ const TradeForm = ({ isEdit = false }) => {
                 value={m}
                 onChange={(e) => handleArrayChange("mistakes", i, e.target.value)}
                 placeholder={`Mistake ${i + 1}`}
-                className="flex-1 p-2 rounded bg-gray-800 border border-gray-700"
+                className="flex-1 p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
               {form.mistakes.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeArrayField("mistakes", i)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 rounded"
+                  className="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-3 rounded text-sm sm:text-base"
                 >
                   Remove
                 </button>
@@ -697,9 +703,12 @@ const TradeForm = ({ isEdit = false }) => {
           <button
             type="button"
             onClick={() => addArrayField("mistakes")}
-            className="text-sm text-emerald-400 hover:text-emerald-300 mt-2"
+            className="text-sm text-emerald-400 hover:text-emerald-300 mt-2 flex items-center gap-1"
           >
-            + Add Mistake
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            Add Mistake
           </button>
         </div>
 
@@ -710,7 +719,7 @@ const TradeForm = ({ isEdit = false }) => {
             name="emojis"
             value={form.emojis}
             onChange={handleChange}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           >
             <option value="">Select an emoji...</option>
             {EMOJI_OPTIONS.map((emoji) => (
@@ -727,11 +736,11 @@ const TradeForm = ({ isEdit = false }) => {
         </div>
 
         {/* Calculations */}
-        <div className="col-span-2 bg-gray-800 p-4 rounded-lg">
-          <h3 className="text-lg font-semibold mb-3 text-emerald-400">
+        <div className="col-span-2 bg-gray-800 p-3 sm:p-4 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2 sm:mb-3 text-emerald-400">
             Trade Calculations
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 text-xs sm:text-sm">
             <div className="bg-gray-700 p-2 rounded">
               <div className="text-gray-400">Capital</div>
               <div className="font-bold">₹{calculated.capital.toFixed(2)}</div>
@@ -767,13 +776,13 @@ const TradeForm = ({ isEdit = false }) => {
         <div className="col-span-2 flex justify-center">
           <button
             type="submit"
-            disabled={isUploading}
-            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg w-full md:w-1/2 transition duration-200 cursor-pointer"
+            disabled={isUploading || loading}
+            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg w-full md:w-1/2 transition duration-200 flex items-center justify-center gap-2"
           >
-            {isUploading ? (
-              <span className="flex items-center justify-center">
+            {isUploading || loading ? (
+              <>
                 <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  className="animate-spin h-5 w-5 text-white"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -793,7 +802,7 @@ const TradeForm = ({ isEdit = false }) => {
                   ></path>
                 </svg>
                 Processing...
-              </span>
+              </>
             ) : (
               isEdit ? "Update Trade" : "Save Trade"
             )}

@@ -382,6 +382,49 @@ const HomePage = () => {
           </div>
         )}
       </div>
+      {/* Date Range Filter */}More actions
+      <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg sm:text-xl font-medium text-[#27c284]">
+            Date Range Filter
+          </h3>
+          <button
+            onClick={handleClearDates}
+            className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-[#27c284] rounded-md text-sm transition-colors"
+          >
+            Clear Dates
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-gray-300 mb-1 text-sm font-medium">
+              Start Date:
+            </label>
+            <input
+              type="date"
+              name="startDate"
+              value={dateRange.startDate}
+              onChange={handleDateChange}
+              max={dateRange.endDate}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
+            />
+          </div>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-gray-300 mb-1 text-sm font-medium">
+              End Date:
+            </label>
+            <input
+              type="date"
+              name="endDate"
+              value={dateRange.endDate}
+              onChange={handleDateChange}
+              min={dateRange.startDate}
+              max={dayjs().format("YYYY-MM-DD")}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-gray-300 focus:outline-none focus:ring-1 focus:ring-[#27c284]"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* PNL Line Chart */}
       <div className="bg-gray-800 rounded-lg shadow-lg border border-gray-700 mb-6 p-4 sm:p-6">
