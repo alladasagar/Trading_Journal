@@ -332,7 +332,7 @@ const TradeForm = ({ isEdit = false }) => {
         exit: form.exit ? parseFloat(form.exit) : 0,
         stop_loss: form.stop_loss ? parseFloat(form.stop_loss) : 0,
         shares: form.shares ? parseFloat(form.shares) : 0,
-        charges: form.charges ? parseFloat(form.charges) : 0, // Default to 0 if empty
+        charges: form.charges ? parseFloat(form.charges) : 0, 
         target: form.target ? parseFloat(form.target) : 0,
         mistakes: form.mistakes.filter((m) => m !== ""),
         emojis: form.emojis,
