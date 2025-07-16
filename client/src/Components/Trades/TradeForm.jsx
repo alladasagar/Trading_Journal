@@ -38,7 +38,7 @@ const TradeForm = ({ isEdit = false }) => {
     entry: "",
     exit: "",
     stop_loss: "",
-    shares: "",
+    shares: 0,
     charges: "",
     entry_date: new Date().toISOString().split("T")[0],
     exit_date: "",
@@ -63,7 +63,6 @@ const TradeForm = ({ isEdit = false }) => {
     roi: 0,
   });
 
-  // Load trade data if in edit mode
   useEffect(() => {
     if (!isEdit) return;
 
@@ -329,12 +328,12 @@ const TradeForm = ({ isEdit = false }) => {
         ...form,
         ...calculated,
         strategyId: strategyId,
-        entry: form.entry ? parseFloat(form.entry) : null,
-        exit: form.exit ? parseFloat(form.exit) : null,
-        stop_loss: form.stop_loss ? parseFloat(form.stop_loss) : null,
-        shares: form.shares ? parseFloat(form.shares) : null,
+        entry: form.entry ? parseFloat(form.entry) : 0,
+        exit: form.exit ? parseFloat(form.exit) : 0,
+        stop_loss: form.stop_loss ? parseFloat(form.stop_loss) : 0,
+        shares: form.shares ? parseFloat(form.shares) : 0,
         charges: form.charges ? parseFloat(form.charges) : 0, // Default to 0 if empty
-        target: form.target ? parseFloat(form.target) : null,
+        target: form.target ? parseFloat(form.target) : 0,
         mistakes: form.mistakes.filter((m) => m !== ""),
         emojis: form.emojis,
         screenshots: form.screenshots,
@@ -378,7 +377,6 @@ const TradeForm = ({ isEdit = false }) => {
       </h2>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        {/* Trade Name */}
         <div className="col-span-1">
           <label className="block text-sm font-medium mb-1">Trade Name</label>
           <input

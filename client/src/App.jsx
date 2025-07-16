@@ -56,7 +56,6 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/offline" element={<OfflinePage />} />
 
-          {/* 🔒 Protected routes */}
           <Route element={<PrivateRoute />}>
             <Route element={<Navbar />}>
               <Route path="/home" element={<HomePage />} />
@@ -77,6 +76,7 @@ function App() {
               <Route path="/" element={<HomePage />} />
             </Route>
           </Route>
+          
         </Routes>
       </NetworkAwareRouter>
     </BrowserRouter>
